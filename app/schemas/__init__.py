@@ -19,6 +19,11 @@ from .ai import (
     SalesNarrativeResponse,
 )
 
+from .embedding import (
+    SemanticSearchRequest,
+    SemanticSearchResponse,
+)
+
 __all__ = [
     "KPIResponse",
     "RegionSalesResponse",
@@ -32,4 +37,6 @@ __all__ = [
     "InsightResponse",
     "ExecutiveSummaryAIResponse",
     "SalesNarrativeResponse",
+    "SemanticSearchRequest",
+    "SemanticSearchResponse",
 ]
