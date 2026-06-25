@@ -3,6 +3,8 @@ from .dashboard import (
     RegionSalesResponse,
     ProductSalesResponse,
     MonthlySalesResponse,
+    ChartDatasetResponse,
+    ExecutiveSummaryResponse,
 )
 
 __all__ = [
@@ -10,4 +12,6 @@ __all__ = [
     "RegionSalesResponse",
     "ProductSalesResponse",
     "MonthlySalesResponse",
+    "ChartDatasetResponse",
+    "ExecutiveSummaryResponse",
 ]

@@ -2,7 +2,8 @@
 Dashboard API endpoints.
 
 Provides analytics and KPI data for
-BI dashboards and frontend consumers.
+BI dashboards, Power BI consumers,
+and future AI insight services.
 """
 
 from fastapi import APIRouter
@@ -10,14 +11,19 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+
 from app.schemas.dashboard import (
     KPIResponse,
-    ProductSalesResponse,
     RegionSalesResponse,
+    ProductSalesResponse,
     MonthlySalesResponse,
+    ChartDatasetResponse,
+    ExecutiveSummaryResponse,
 )
+
 from app.services.analytics.kpi import KPIService
 from app.services.analytics.stats import AnalyticsService
+from app.services.analytics.charts import ChartService
 
 router = APIRouter(
     prefix="/dashboard",
@@ -87,3 +93,67 @@ def monthly_sales(
     service = AnalyticsService(db)
 
     return service.monthly_sales()
+
+
+@router.get(
+    "/chart/sales-by-region",
+    response_model=ChartDatasetResponse,
+)
+def sales_by_region_chart(
+    db: Session = Depends(get_db),
+):
+    """
+    Chart-ready sales by region dataset.
+    """
+
+    service = ChartService(db)
+
+    return service.sales_by_region_chart()
+
+
+@router.get(
+    "/chart/top-products",
+    response_model=ChartDatasetResponse,
+)
+def top_products_chart(
+    db: Session = Depends(get_db),
+):
+    """
+    Chart-ready top products dataset.
+    """
+
+    service = ChartService(db)
+
+    return service.top_products_chart()
+
+
+@router.get(
+    "/chart/monthly-sales",
+    response_model=ChartDatasetResponse,
+)
+def monthly_sales_chart(
+    db: Session = Depends(get_db),
+):
+    """
+    Chart-ready monthly sales dataset.
+    """
+
+    service = ChartService(db)
+
+    return service.monthly_sales_chart()
+
+
+@router.get(
+    "/chart/executive-summary",
+    response_model=ExecutiveSummaryResponse,
+)
+def executive_summary(
+    db: Session = Depends(get_db),
+):
+    """
+    Executive dashboard summary.
+    """
+
+    service = ChartService(db)
+
+    return service.executive_summary()

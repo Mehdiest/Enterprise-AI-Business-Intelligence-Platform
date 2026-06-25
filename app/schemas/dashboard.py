@@ -53,3 +53,35 @@ class MonthlySalesResponse(BaseModel):
     month: str
 
     sales: float = Field(..., ge=0)
+
+
+class ChartDatasetResponse(BaseModel):
+    """
+    Generic chart dataset.
+    """
+
+    chart_type: str
+
+    title: str
+
+    labels: list[str]
+
+    values: list[float]
+
+
+class ExecutiveSummaryResponse(BaseModel):
+    """
+    Executive dashboard summary.
+    """
+
+    total_sales: float
+
+    total_orders: int
+
+    average_order_value: float
+
+    top_region: str
+
+    top_product: str
+
+    generated_at: str
