@@ -7,6 +7,12 @@ from .dashboard import (
     ExecutiveSummaryResponse,
 )
 
+from .forecast import (
+    RevenueForecastResponse,
+    GrowthForecastResponse,
+    ExecutiveForecastResponse,
+)
+
 __all__ = [
     "KPIResponse",
     "RegionSalesResponse",
@@ -14,4 +20,7 @@ __all__ = [
     "MonthlySalesResponse",
     "ChartDatasetResponse",
     "ExecutiveSummaryResponse",
+    "RevenueForecastResponse",
+    "GrowthForecastResponse",
+    "ExecutiveForecastResponse",
 ]

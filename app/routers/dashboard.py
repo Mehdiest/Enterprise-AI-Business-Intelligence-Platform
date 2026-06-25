@@ -1,13 +1,11 @@
 """
 Dashboard API endpoints.
 
-Provides analytics and KPI data for
-BI dashboards, Power BI consumers,
-and future AI insight services.
+Provides analytics, charts, KPI data,
+and predictive forecasting services.
 """
 
-from fastapi import APIRouter
-from fastapi import Depends
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -21,9 +19,16 @@ from app.schemas.dashboard import (
     ExecutiveSummaryResponse,
 )
 
+from app.schemas.forecast import (
+    RevenueForecastResponse,
+    GrowthForecastResponse,
+    ExecutiveForecastResponse,
+)
+
 from app.services.analytics.kpi import KPIService
 from app.services.analytics.stats import AnalyticsService
 from app.services.analytics.charts import ChartService
+from app.services.analytics.forecast import ForecastService
 
 router = APIRouter(
     prefix="/dashboard",
@@ -38,13 +43,7 @@ router = APIRouter(
 def get_kpis(
     db: Session = Depends(get_db),
 ):
-    """
-    Return top-level KPI metrics.
-    """
-
-    service = KPIService(db)
-
-    return service.get_kpis()
+    return KPIService(db).get_kpis()
 
 
 @router.get(
@@ -54,13 +53,7 @@ def get_kpis(
 def sales_by_region(
     db: Session = Depends(get_db),
 ):
-    """
-    Return sales aggregated by region.
-    """
-
-    service = AnalyticsService(db)
-
-    return service.sales_by_region()
+    return AnalyticsService(db).sales_by_region()
 
 
 @router.get(
@@ -70,13 +63,7 @@ def sales_by_region(
 def top_products(
     db: Session = Depends(get_db),
 ):
-    """
-    Return top-selling products.
-    """
-
-    service = AnalyticsService(db)
-
-    return service.top_products()
+    return AnalyticsService(db).top_products()
 
 
 @router.get(
@@ -86,13 +73,7 @@ def top_products(
 def monthly_sales(
     db: Session = Depends(get_db),
 ):
-    """
-    Return sales trend over time.
-    """
-
-    service = AnalyticsService(db)
-
-    return service.monthly_sales()
+    return AnalyticsService(db).monthly_sales()
 
 
 @router.get(
@@ -102,13 +83,7 @@ def monthly_sales(
 def sales_by_region_chart(
     db: Session = Depends(get_db),
 ):
-    """
-    Chart-ready sales by region dataset.
-    """
-
-    service = ChartService(db)
-
-    return service.sales_by_region_chart()
+    return ChartService(db).sales_by_region_chart()
 
 
 @router.get(
@@ -118,13 +93,7 @@ def sales_by_region_chart(
 def top_products_chart(
     db: Session = Depends(get_db),
 ):
-    """
-    Chart-ready top products dataset.
-    """
-
-    service = ChartService(db)
-
-    return service.top_products_chart()
+    return ChartService(db).top_products_chart()
 
 
 @router.get(
@@ -134,13 +103,7 @@ def top_products_chart(
 def monthly_sales_chart(
     db: Session = Depends(get_db),
 ):
-    """
-    Chart-ready monthly sales dataset.
-    """
-
-    service = ChartService(db)
-
-    return service.monthly_sales_chart()
+    return ChartService(db).monthly_sales_chart()
 
 
 @router.get(
@@ -150,10 +113,34 @@ def monthly_sales_chart(
 def executive_summary(
     db: Session = Depends(get_db),
 ):
-    """
-    Executive dashboard summary.
-    """
+    return ChartService(db).executive_summary()
 
-    service = ChartService(db)
 
-    return service.executive_summary()
+@router.get(
+    "/forecast/revenue",
+    response_model=RevenueForecastResponse,
+)
+def revenue_forecast(
+    db: Session = Depends(get_db),
+):
+    return ForecastService(db).revenue_forecast()
+
+
+@router.get(
+    "/forecast/growth",
+    response_model=GrowthForecastResponse,
+)
+def growth_forecast(
+    db: Session = Depends(get_db),
+):
+    return ForecastService(db).growth_forecast()
+
+
+@router.get(
+    "/forecast/executive-forecast",
+    response_model=ExecutiveForecastResponse,
+)
+def executive_forecast(
+    db: Session = Depends(get_db),
+):
+    return ForecastService(db).executive_forecast()
