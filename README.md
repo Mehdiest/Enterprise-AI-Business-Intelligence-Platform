@@ -17,8 +17,6 @@ Enterprise-oriented AI Business Intelligence platform.
 ``` text
 Client -> FastAPI -> Knowledge Engine -> Embeddings -> FAISS -> Persistent Storage
 
-```
-
                 ┌──────────────────────┐
                 │      FastAPI API     │
                 └──────────┬───────────┘
