@@ -1,85 +1,43 @@
 # AI Business Intelligence Platform
 
-Enterprise-grade AI Business Intelligence Platform powered by Multi-Agent AI Architecture, Semantic Retrieval, Business Analytics, SQL Intelligence, and Enterprise Copilot.
+Enterprise-grade AI Business Intelligence Platform powered by Multi-Agent AI, Semantic Retrieval, SQL Intelligence, and Enterprise Analytics.
+
+![Python](https://img.shields.io/badge/Python-3.12-blue)
+![FastAPI](https://img.shields.io/badge/FastAPI-Enterprise-green)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Data%20Warehouse-blue)
+![FAISS](https://img.shields.io/badge/FAISS-Vector%20Search-orange)
+![Architecture](https://img.shields.io/badge/Architecture-Multi--Agent-red)
+![License](https://img.shields.io/badge/License-MIT-lightgrey)
 
 ---
 
 # Overview
 
-AI Business Intelligence Platform is a production-oriented Business Intelligence Copilot designed to bridge the gap between enterprise data warehouses and natural language interaction.
+AI Business Intelligence Platform is an enterprise-oriented Business Intelligence Copilot that combines semantic retrieval, SQL analytics, and multi-agent orchestration into a single AI system.
 
-Instead of acting as a simple Retrieval-Augmented Generation (RAG) chatbot, the platform orchestrates multiple AI agents capable of understanding business questions, retrieving semantic knowledge, executing analytical workflows, generating SQL queries, and producing grounded responses with citations.
-
-The architecture has been designed using enterprise software engineering principles including modular services, layered architecture, runtime execution contexts, and agent orchestration.
-
-Current implementation focuses on enterprise-ready backend architecture while remaining provider-agnostic for future integration with OpenAI, Ollama, Azure OpenAI, Claude, Gemini, or local LLM deployments.
+Instead of acting as a traditional RAG chatbot, the platform understands business questions, retrieves relevant knowledge, executes structured analytics, generates SQL when required, and produces grounded responses through a modular enterprise pipeline.
 
 ---
 
-# Key Features
+# Highlights
 
-## Enterprise AI Copilot
-
-* Enterprise Business Intelligence Copilot
-* Multi-Agent AI Architecture
-* Runtime Execution Engine
-* Modular Agent Orchestration
-* Enterprise Response Pipeline
-
----
-
-## Semantic Intelligence
-
-* Retrieval-Augmented Generation (RAG)
-* Semantic Search
-* Persistent FAISS Vector Database
-* Embedding-based Knowledge Retrieval
-* Context Builder
-* Citation Engine
-* Hallucination Guard
-
----
-
-## Business Intelligence
-
-* Business Analytics
-* KPI Engine
-* Data Warehouse Integration
+* Enterprise Multi-Agent AI Architecture
+* Natural Language Business Analytics
 * SQL Intelligence
-* Natural Language Business Queries
-* Analytical Runtime Context
+* Retrieval-Augmented Generation (RAG)
+* FAISS Semantic Search
+* Enterprise Copilot Engine
+* Runtime Execution Context
+* PostgreSQL Data Warehouse
+* Star Schema Analytics
+* Provider-independent LLM Layer
 
 ---
 
-## AI Agents
-
-* Planner Agent
-* Retriever Agent
-* Analytics Agent
-* SQL Agent
-* Response Agent
-
----
-
-## Enterprise Runtime
-
-* Execution Context
-* Runtime Pipeline
-* Agent Registry
-* Service Layer
-* Provider Abstraction
-* Prompt Builder
-* Intent Classification
-
----
-
-# Architecture (Phase 7)
+# Architecture
 
 ```text
                                    User
-                                     │
-                                     ▼
-                           Enterprise API Layer
                                      │
                                      ▼
                              Copilot Service
@@ -88,552 +46,251 @@ Current implementation focuses on enterprise-ready backend architecture while re
                           Enterprise Copilot Engine
                                      │
           ┌──────────────────────────┼──────────────────────────┐
-          │                          │                          │
           ▼                          ▼                          ▼
  Intent Classification        Context Builder          Execution Context
                                      │
                                      ▼
-                      ┌─────────────────────────────────────┐
-                      │         Multi-Agent Layer           │
-                      │                                     │
-                      │  Planner Agent                      │
-                      │        │                            │
-                      │        ▼                            │
-                      │  Retriever Agent                   │
-                      │        │                            │
-                      │        ▼                            │
-                      │  Analytics Agent                   │
-                      │        │                            │
-                      │        ▼                            │
-                      │  SQL Agent                         │
-                      │        │                            │
-                      │        ▼                            │
-                      │  Response Agent                    │
-                      └─────────────────────────────────────┘
-                                     │
-                                     ▼
-                             Prompt Builder
-                                     │
-                                     ▼
-                               LLM Provider
-                                     │
-                                     ▼
-                         Enterprise AI Response
+                      Planner Agent
+                             │
+                             ▼
+                    Retriever Agent
+                             │
+                             ▼
+                    Analytics Agent
+                             │
+                             ▼
+                       SQL Agent
+                             │
+                             ▼
+                    Response Agent
+                             │
+                             ▼
+                     Prompt Builder
+                             │
+                             ▼
+                        LLM Provider
+                             │
+                             ▼
+                   Enterprise AI Response
 ```
 
 ---
 
-# Enterprise Workflow
+# Key Features
 
-```text
-User Question
+## AI
 
-      │
+* Multi-Agent AI Copilot
+* Intent Classification
+* Prompt Builder
+* Provider-independent LLM Layer
+* Enterprise Response Generation
 
-      ▼
+## Retrieval
 
-Intent Classification
+* Semantic Search
+* FAISS Vector Database
+* Embedding Retrieval
+* Context Builder
+* Citation Support
 
-      │
+## Analytics
 
-      ▼
+* Business KPI Analysis
+* SQL Analytics
+* Natural Language Queries
+* Data Warehouse Integration
 
-Planner Agent
+## Runtime
 
-      │
-
-      ▼
-
-Retriever Agent
-
-      │
-
-      ▼
-
-Analytics Agent
-
-      │
-
-      ▼
-
-SQL Agent
-
-      │
-
-      ▼
-
-Response Agent
-
-      │
-
-      ▼
-
-Prompt Builder
-
-      │
-
-      ▼
-
-LLM Provider
-
-      │
-
-      ▼
-
-# Project Structure
-
-```text
-AI-Business-Intelligence-Platform
-│
-├── app
-│   ├── config.py
-│   ├── database.py
-│   ├── main.py
-│   │
-│   ├── models
-│   ├── routers
-│   ├── schemas
-│   ├── utils
-│   │
-│   └── services
-│       │
-│       ├── analytics
-│       ├── etl
-│       ├── llm
-│       ├── vector_store
-│       │
-│       └── ai
-│           └── copilot
-│               │
-│               ├── engine.py
-│               ├── service.py
-│               ├── models.py
-│               ├── prompt.py
-│               ├── intent.py
-│               ├── context.py
-│               │
-│               ├── context_runtime
-│               │   ├── models.py
-│               │   ├── runtime.py
-│               │   └── factory.py
-│               │
-│               └── agents
-│                   ├── planner
-│                   ├── retriever
-│                   ├── analytics
-│                   ├── sql
-│                   └── response
-│
-├── tests
-│   ├── unit
-│   ├── integration
-│   └── manual
-│
-├── data
-├── docs
-├── scripts
-├── requirements.txt
-└── README.md
-```
+* Execution Context
+* Runtime Pipeline
+* Agent Orchestration
+* Modular Architecture
 
 ---
 
 # Technology Stack
 
-## Backend
-
-* Python 3.12
-* FastAPI
-* SQLAlchemy
-* Pydantic v2
-
----
-
-## Artificial Intelligence
-
-* Enterprise AI Copilot
-* Multi-Agent Architecture
-* Sentence Transformers
-* Retrieval-Augmented Generation (RAG)
-* Prompt Engineering
-* Semantic Search
-* FAISS Vector Store
+| Layer        | Technology            |
+| ------------ | --------------------- |
+| Backend      | FastAPI               |
+| Language     | Python 3.12           |
+| Database     | PostgreSQL            |
+| ORM          | SQLAlchemy            |
+| Validation   | Pydantic v2           |
+| Vector Store | FAISS                 |
+| Embeddings   | Sentence Transformers |
+| AI           | Enterprise Copilot    |
+| Architecture | Multi-Agent           |
+| Testing      | Pytest + Manual Tests |
 
 ---
 
-## Data Platform
-
-* PostgreSQL
-* SQLite (Development)
-* ETL Pipeline
-* Star Schema Data Warehouse
-* SQLAlchemy ORM
-
----
-
-## Enterprise Architecture
-
-* Layered Architecture
-* Service-Oriented Design
-* Runtime Execution Context
-* Multi-Agent Orchestration
-* Dependency Injection
-* Provider Abstraction
-
----
-
-## Development
-
-* Git
-* GitHub
-* Pytest
-* Manual Integration Tests
-
----
-
-# Enterprise AI Agents
-
-## Planner Agent
-
-Responsible for understanding user intent and selecting the optimal execution strategy before downstream agents begin processing.
-
-Responsibilities:
-
-* Request planning
-* Execution strategy selection
-* Workflow routing
-
----
-
-## Retriever Agent
-
-Responsible for semantic knowledge retrieval.
-
-Responsibilities:
-
-* Vector search
-* Context retrieval
-* Semantic ranking
-* Knowledge grounding
-
----
-
-## Analytics Agent
-
-Responsible for business-oriented analytical processing.
-
-Responsibilities:
-
-* KPI generation
-* Business summaries
-* Metric calculation
-* Analytical insights
-
----
-
-## SQL Agent
-
-Responsible for structured database interaction.
-
-Responsibilities:
-
-* SQL planning
-* SQL generation
-* SQL validation
-* SQL execution
-* Result formatting
-
----
-
-## Response Agent
-
-Responsible for assembling outputs produced by all previous agents into a unified response context before prompt generation.
-
-Responsibilities:
-
-* Response aggregation
-* Citation collection
-* Confidence propagation
-* Runtime packaging
-
----
-
-# SQL Intelligence Pipeline
-
-```text
-Natural Language Question
-            │
-            ▼
-      SQL Planner
-            │
-            ▼
-     SQL Generator
-            │
-            ▼
-     SQL Validator
-            │
-            ▼
-   PostgreSQL Executor
-            │
-            ▼
-     Result Formatter
-            │
-            ▼
- Enterprise SQL Response
-```
 # Project Structure
 
 ```text
-AI-Business-Intelligence-Platform
+app
 │
-├── app
-│   ├── config.py
-│   ├── database.py
-│   ├── main.py
-│   │
-│   ├── models
-│   ├── routers
-│   ├── schemas
-│   ├── utils
-│   │
-│   └── services
-│       │
-│       ├── analytics
-│       ├── etl
-│       ├── llm
-│       ├── vector_store
-│       │
-│       └── ai
-│           └── copilot
-│               │
-│               ├── engine.py
-│               ├── service.py
-│               ├── models.py
-│               ├── prompt.py
-│               ├── intent.py
-│               ├── context.py
-│               │
-│               ├── context_runtime
-│               │   ├── models.py
-│               │   ├── runtime.py
-│               │   └── factory.py
-│               │
-│               └── agents
-│                   ├── planner
-│                   ├── retriever
-│                   ├── analytics
-│                   ├── sql
-│                   └── response
+├── routers
+├── schemas
+├── models
+├── utils
 │
-├── tests
-│   ├── unit
-│   ├── integration
-│   └── manual
-│
-├── data
-├── docs
-├── scripts
-├── requirements.txt
-└── README.md
+└── services
+    ├── analytics
+    ├── etl
+    ├── vector_store
+    ├── llm
+    │
+    └── ai
+        └── copilot
+            ├── engine.py
+            ├── service.py
+            ├── context_runtime
+            ├── prompt.py
+            ├── intent.py
+            ├── context.py
+            │
+            └── agents
+                ├── planner
+                ├── retriever
+                ├── analytics
+                ├── sql
+                └── response
 ```
 
 ---
 
-# Technology Stack
+# Quick Start
 
-## Backend
-
-* Python 3.12
-* FastAPI
-* SQLAlchemy
-* Pydantic v2
-
----
-
-## Artificial Intelligence
-
-* Enterprise AI Copilot
-* Multi-Agent Architecture
-* Sentence Transformers
-* Retrieval-Augmented Generation (RAG)
-* Prompt Engineering
-* Semantic Search
-* FAISS Vector Store
-
----
-
-## Data Platform
-
-* PostgreSQL
-* SQLite (Development)
-* ETL Pipeline
-* Star Schema Data Warehouse
-* SQLAlchemy ORM
-
----
-
-## Enterprise Architecture
-
-* Layered Architecture
-* Service-Oriented Design
-* Runtime Execution Context
-* Multi-Agent Orchestration
-* Dependency Injection
-* Provider Abstraction
-
----
-
-## Development
-
-* Git
-* GitHub
-* Pytest
-* Manual Integration Tests
-
----
-
-# Enterprise AI Agents
-
-## Planner Agent
-
-Responsible for understanding user intent and selecting the optimal execution strategy before downstream agents begin processing.
-
-Responsibilities:
-
-* Request planning
-* Execution strategy selection
-* Workflow routing
-
----
-
-## Retriever Agent
-
-Responsible for semantic knowledge retrieval.
-
-Responsibilities:
-
-* Vector search
-* Context retrieval
-* Semantic ranking
-* Knowledge grounding
-
----
-
-## Analytics Agent
-
-Responsible for business-oriented analytical processing.
-
-Responsibilities:
-
-* KPI generation
-* Business summaries
-* Metric calculation
-* Analytical insights
-
----
-
-## SQL Agent
-
-Responsible for structured database interaction.
-
-Responsibilities:
-
-* SQL planning
-* SQL generation
-* SQL validation
-* SQL execution
-* Result formatting
-
----
-
-## Response Agent
-
-Responsible for assembling outputs produced by all previous agents into a unified response context before prompt generation.
-
-Responsibilities:
-
-* Response aggregation
-* Citation collection
-* Confidence propagation
-* Runtime packaging
-
----
-
-# SQL Intelligence Pipeline
-
-```text
-Natural Language Question
-            │
-            ▼
-      SQL Planner
-            │
-            ▼
-     SQL Generator
-            │
-            ▼
-     SQL Validator
-            │
-            ▼
-   PostgreSQL Executor
-            │
-            ▼
-     Result Formatter
-            │
-            ▼
- Enterprise SQL Response
-```
-
----
-
-# Runtime Execution Context
-
-A shared runtime object is passed across every agent during execution.
-
-Instead of allowing agents to communicate directly with one another, each agent reads from and writes to a centralized execution context.
-
-This approach provides:
-
-* Loose coupling
-* Better scalability
-* Easier testing
-* Cleaner dependency management
-* Enterprise-ready orchestration
-
----
-
-# Installation
-
-Clone the repository:
+Clone the repository
 
 ```bash
 git clone https://github.com/Mehdiest/AI-Business-Intelligence-Platform.git
 ```
 
-Enter the project directory:
-
-```bash
-cd AI-Business-Intelligence-Platform
-```
-
-Install dependencies:
+Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Run the API:
+Run the application
 
 ```bash
 uvicorn app.main:app --reload
 ```
 
+Open Swagger
+
+```text
+http://localhost:8000/docs
+```
+# Enterprise Workflow
+
+```text
+User Question
+      │
+      ▼
+Intent Classification
+      │
+      ▼
+Planner Agent
+      │
+      ▼
+Retriever Agent
+      │
+      ▼
+Analytics Agent
+      │
+      ▼
+SQL Agent
+      │
+      ▼
+Response Agent
+      │
+      ▼
+Prompt Builder
+      │
+      ▼
+LLM Provider
+      │
+      ▼
+Enterprise Business Response
+```
+
 ---
 
-# Manual Test Suite
+# SQL Intelligence
 
-The project includes multiple manual validation pipelines.
+The SQL Agent transforms natural language questions into executable SQL queries using a modular pipeline.
 
-Examples include:
+```text
+Natural Language
+        │
+        ▼
+ SQL Planner
+        │
+        ▼
+SQL Generator
+        │
+        ▼
+SQL Validator
+        │
+        ▼
+ SQL Executor
+        │
+        ▼
+SQL Formatter
+        │
+        ▼
+ Business Result
+```
+
+Current capabilities include:
+
+* SQL planning
+* SQL generation
+* SQL validation
+* Safe query execution
+* Result formatting
+* Enterprise SQL orchestration
+
+---
+
+# Multi-Agent Components
+
+| Agent     | Responsibility                |
+| --------- | ----------------------------- |
+| Planner   | Plans execution strategy      |
+| Retriever | Retrieves semantic knowledge  |
+| Analytics | Produces business insights    |
+| SQL       | Executes structured analytics |
+| Response  | Builds the final AI response  |
+
+---
+
+# Current Capabilities
+
+* Enterprise Business Intelligence Copilot
+* Multi-Agent AI Architecture
+* Retrieval-Augmented Generation (RAG)
+* Semantic Search with FAISS
+* PostgreSQL Data Warehouse
+* SQL Intelligence
+* Business KPI Analysis
+* Runtime Execution Context
+* Enterprise Prompt Pipeline
+* Provider-independent LLM Layer
+
+---
+
+# Testing
+
+The repository contains independent manual tests for every major component.
+
+Available validation suites include:
 
 * Copilot Pipeline
 * Planner Agent
@@ -644,201 +301,83 @@ Examples include:
 * SQL Agent
 * Response Agent
 * Multi-Agent Pipeline
-* Phase 7 Enterprise Audit
+* Enterprise Runtime
+* Phase 7 Audit
 
-Each module can be validated independently before integration into the complete orchestration pipeline.
-
----
-# Roadmap
-
-## Phase 1 — Foundation ✅
-
-* FastAPI Backend
-* Project Structure
-* Configuration Management
-* Database Integration
+Each module can be validated independently before being integrated into the full execution pipeline.
 
 ---
 
-## Phase 2 — Data Platform ✅
+# Development Roadmap
 
-* ETL Pipeline
-* Data Cleaning
-* Data Warehouse
-* Star Schema
-* SQLAlchemy Models
-
----
-
-## Phase 3 — Business Intelligence ✅
-
-* KPI Calculation
-* Analytics Layer
-* Business Metrics
-* Dashboard-ready Data
+| Phase                              | Status         |
+| ---------------------------------- | -------------- |
+| Phase 1 — Foundation               | ✅ Complete     |
+| Phase 2 — Data Platform            | ✅ Complete     |
+| Phase 3 — Business Intelligence    | ✅ Complete     |
+| Phase 4 — Semantic Retrieval       | ✅ Complete     |
+| Phase 5 — Enterprise Copilot       | ✅ Complete     |
+| Phase 6 — RAG Integration          | ✅ Complete     |
+| Phase 7 — Multi-Agent Architecture | ✅ Complete     |
+| Phase 7.5 — Production Polish      | 🚧 In Progress |
+| Phase 8 — Production Features      | ⏳ Planned      |
 
 ---
 
-## Phase 4 — Semantic Search ✅
+# Planned Features
 
-* Sentence Transformers
-* Embeddings
-* FAISS Vector Store
-* Retrieval Pipeline
-* Context Builder
+The next development phase focuses on production readiness.
 
----
+Planned improvements include:
 
-## Phase 5 — Enterprise Copilot ✅
-
-* Prompt Builder
-* Intent Classification
-* LLM Provider Abstraction
-* Enterprise Copilot API
-
----
-
-## Phase 6 — RAG Integration ✅
-
-* Retrieval-Augmented Generation
-* Citation Support
-* Context-aware Responses
-* Hallucination Protection
-* Enterprise Prompt Pipeline
-
----
-
-## Phase 7 — Multi-Agent Enterprise Architecture ✅
-
-* Multi-Agent Copilot
-* Planner Agent
-* Retriever Agent
-* Analytics Agent
-* SQL Agent
-* Response Agent
-* Execution Context
-* Runtime Pipeline
-* Enterprise Engine
-* SQL Intelligence
-* Natural Language Analytics
-* End-to-End Enterprise Workflow
-
----
-
-## Phase 7.5 — Production Polish *(Planned)*
-
-* Enterprise Logging
-* Error Handling Improvements
-* Architecture Cleanup
-* Dependency Review
-* Performance Optimization
-* Repository Polish
-* Advanced Documentation
-* Regression Testing
-
----
-
-## Phase 8 — Production Features *(Planned)*
-
+* Docker Support
+* Redis Cache
+* Streaming Responses
+* Conversation Memory
 * OpenAI Integration
 * Ollama Integration
 * Azure OpenAI Support
-* Claude Support
-* Conversation Memory
-* Streaming Responses
-* Async Runtime
-* Redis Cache
-* Docker Deployment
 * CI/CD Pipeline
-* Monitoring & Observability
+* Monitoring
+* Observability
 * Prompt Versioning
+* Enterprise Logging
 
 ---
 
-# Current Capabilities
+# Documentation
 
-The platform currently supports:
+Additional technical documentation will be available inside the `docs/` directory.
 
-* Enterprise Business Intelligence Copilot
-* Semantic Knowledge Retrieval
-* SQL-based Analytics
-* Multi-Agent Decision Pipeline
-* Runtime Context Sharing
-* Retrieval-Augmented Generation
-* Enterprise-ready Backend Architecture
-* Natural Language Business Questions
-* Provider-independent LLM Integration
+Planned documentation includes:
 
----
+```text
+docs/
 
-# Design Principles
-
-The project follows several enterprise software engineering principles:
-
-* Separation of Concerns
-* Layered Architecture
-* Low Coupling
-* High Cohesion
-* Runtime Context Sharing
-* Provider Abstraction
-* Agent-based Orchestration
-* Modular Components
-* Production-oriented Design
-
----
-
-# Future Vision
-
-The long-term goal is to transform this repository into a fully featured AI Business Intelligence Platform capable of serving as an intelligent analytics assistant for enterprise environments.
-
-Future versions will support:
-
-* Real-time Business Intelligence
-* Multi-Database Connectivity
-* Autonomous AI Planning
-* Tool Calling
-* Agent Collaboration
-* Enterprise Authentication
-* Dashboard Generation
-* Voice-enabled Analytics
-* Distributed Execution
-* Production Deployment
+├── ARCHITECTURE.md
+├── AI_AGENTS.md
+├── SQL_ENGINE.md
+├── RUNTIME.md
+├── DEVELOPMENT.md
+└── ROADMAP.md
+```
 
 ---
 
 # Why This Project?
 
-Most AI analytics projects stop at building a simple RAG chatbot.
+This project demonstrates how modern enterprise AI systems combine:
 
-This project takes a different approach.
-
-It demonstrates how modern enterprise AI systems can combine:
-
-* Data Engineering
 * Backend Engineering
+* Data Engineering
 * Business Intelligence
 * Retrieval-Augmented Generation
 * SQL Intelligence
 * Multi-Agent Systems
 
-within a single production-oriented architecture.
+within a clean, modular, production-oriented architecture.
 
-Rather than focusing only on answering questions, the platform is designed to reason about business requests, retrieve semantic knowledge, execute structured analytics, and generate grounded responses through a modular orchestration pipeline.
-
----
-
-# Repository Highlights
-
-* Enterprise Architecture
-* Production-ready Project Structure
-* Multi-Agent AI Copilot
-* SQL Intelligence
-* Semantic Retrieval
-* Business Analytics
-* Runtime Context Management
-* Extensible LLM Integration
-* Comprehensive Manual Test Suite
-* Clean, Modular Codebase
+Instead of implementing a simple AI chatbot, the platform focuses on enterprise analytics, structured reasoning, and scalable AI orchestration.
 
 ---
 
@@ -846,13 +385,13 @@ Rather than focusing only on answering questions, the platform is designed to re
 
 Contributions, suggestions, and discussions are welcome.
 
-If you would like to improve the platform or extend its capabilities, feel free to open an issue or submit a pull request.
+Feel free to open an Issue or submit a Pull Request.
 
 ---
 
 # License
 
-This project is released under the MIT License.
+This project is licensed under the MIT License.
 
 ---
 
@@ -860,9 +399,8 @@ This project is released under the MIT License.
 
 **Mehdi Esteghlal**
 
-AI • Data Science • Business Intelligence • Machine Learning • Enterprise Analytics
+AI • Data Science • Machine Learning • Business Intelligence • Enterprise Analytics
 
 ---
 
-⭐ If you find this project useful, consider giving the repository a star. It helps others discover the project and supports future development.
-
+⭐ If you found this project useful, consider giving the repository a star.
