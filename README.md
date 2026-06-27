@@ -132,47 +132,6 @@ AI Business Intelligence Platform
 
 ```
 
-## AI Copilot Internal Pipeline
-
-
-
-User Question
-      │
-      ▼
-Copilot Service
-      │
-      ▼
-Copilot Engine
-      │
-      ├──────────────► Intent Classification
-      │
-      ├──────────────► Context Builder
-      │                      │
-      │                      ▼
-      │              FAISS Semantic Search
-      │
-      ├──────────────► Prompt Builder
-      │
-      ├──────────────► Tool Framework
-      │                      │
-      │                (Future Agents)
-      │
-      ├──────────────► LLM Provider
-      │
-      ▼
-Response Pipeline
-      │
-      ├──────────────► Citation Engine
-      ├──────────────► Response Formatter
-      ├──────────────► Validator
-      ├──────────────► Hallucination Guard
-      └──────────────► Confidence Engine
-      │
-      ▼
-Final AI Response
-
-``
-
 
 ## Tech Stack
 
