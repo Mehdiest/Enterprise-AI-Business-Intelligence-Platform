@@ -1,18 +1,8 @@
 """
-Enterprise AI Copilot Engine.
-
-Coordinates the complete AI pipeline.
+Enterprise AI Copilot engine.
 """
 
 from __future__ import annotations
-
-from app.services.ai.copilot.context import (
-    ContextBuilder,
-)
-
-from app.services.ai.copilot.intent import (
-    RuleBasedIntentClassifier,
-)
 
 from app.services.ai.copilot.models import (
     CopilotRequest,
@@ -20,20 +10,44 @@ from app.services.ai.copilot.models import (
     SourceReference,
 )
 
+from app.services.ai.copilot.intent import (
+    RuleBasedIntentClassifier,
+)
+
+from app.services.ai.copilot.context import (
+    ContextBuilder,
+)
+
+from app.services.ai.copilot.prompt import (
+    PromptBuilder,
+)
+
+from app.services.ai.llm import (
+    LLMFactory,
+)
+
 
 class CopilotEngine:
     """
-    Enterprise AI pipeline orchestrator.
+    Enterprise AI Copilot orchestration pipeline.
     """
 
     def __init__(self):
 
-        self.intent_classifier = (
+        self.intent = (
             RuleBasedIntentClassifier()
         )
 
-        self.context_builder = (
+        self.context = (
             ContextBuilder()
+        )
+
+        self.prompt_builder = (
+            PromptBuilder()
+        )
+
+        self.llm = (
+            LLMFactory.create()
         )
 
     def process(
@@ -42,34 +56,47 @@ class CopilotEngine:
     ) -> CopilotResponse:
 
         intent = (
-            self.intent_classifier.classify(
+            self.intent.classify(
                 request.question
             )
         )
 
         context = (
-            self.context_builder.build(
+            self.context.build(
                 request.question
             )
         )
 
-        answer = (
-            f"Intent: {intent.intent.value}\n\n"
-            f"Retrieved {len(context.documents)} "
-            f"context documents."
+        prompt = (
+            self.prompt_builder.build(
+                question=request.question,
+                context=context,
+            )
         )
+
+        answer = (
+            self.llm.generate(
+                prompt
+            )
+        )
+
+        sources = []
+
+        for index, document in enumerate(
+            context.documents,
+            start=1,
+        ):
+
+            sources.append(
+                SourceReference(
+                    id=str(index),
+                    text=document.text,
+                    score=document.score,
+                )
+            )
 
         return CopilotResponse(
             answer=answer,
             confidence=intent.confidence,
-            sources=[
-                SourceReference(
-                    id=str(index + 1),
-                    text=document.text,
-                    score=document.score,
-                )
-                for index, document in enumerate(
-                    context.documents
-                )
-            ],
+            sources=sources,
         )
