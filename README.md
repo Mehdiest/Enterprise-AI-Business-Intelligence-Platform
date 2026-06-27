@@ -25,7 +25,6 @@ Enterprise-oriented AI Business Intelligence platform.
 ``` text
 AI Business Intelligence Platform
 
-AI Business Intelligence Platform
 
 ┌──────────────────────────────────────────────────────────────────────────────┐
 │                               Client Layer                                  │
