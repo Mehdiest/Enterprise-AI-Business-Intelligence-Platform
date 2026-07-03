@@ -499,7 +499,7 @@ Contributions, issues, and feature requests are welcome. Please open an issue fi
 
 ## License
 
-This project is intended for educational purposes, portfolio demonstration, and enterprise software engineering practice.
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ---
 
