@@ -1,22 +1,39 @@
+# Environment files - never bake secrets/local config into the image
+.env
+.env.docker
+.env.production
+.env.example
+.env.*
+
+# Git
 .git
 .gitignore
 
-.idea
-.vscode
-
+# Python cache
 __pycache__
 *.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info
 
-.env
+# Virtual environments
+venv
+.venv
+env
 
-.env.production
+# Tests & cache
+.pytest_cache
+tests/__pycache__
 
-tests
+# IDE
+.vscode
+.idea
 
-docs
+# OS
+.DS_Store
 
+# Docs (not needed at runtime)
 README.md
-
-*.log
-
-postgres_data
+INSTALL.md
+PROJECT_STRUCTURE.md
