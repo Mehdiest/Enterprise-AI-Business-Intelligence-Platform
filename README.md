@@ -5,8 +5,8 @@
 [![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/Mehdiest/Enterprise-AI-Business-Intelligence-Platform)
 [![Python](https://img.shields.io/badge/python-3.12-blue?logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-latest-green?logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Demo](https://img.shields.io/badge/Watch-Demo-red?logo=loom)](YOUR_LOOM_LINK_HERE)
 
 ---
 
