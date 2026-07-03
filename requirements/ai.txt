@@ -8,8 +8,6 @@ openai
 
 tiktoken
 
-sentence-transformers
+python-jose[cryptography]
 
-transformers
-
-torch
+passlib[bcrypt]

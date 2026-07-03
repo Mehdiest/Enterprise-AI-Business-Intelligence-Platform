@@ -1,24 +1,20 @@
 """
-LLM provider factory.
+LLM Factory.
 """
 
 from __future__ import annotations
 
-from app.services.ai.llm.base import (
-    BaseLLMProvider,
-)
-
-from app.services.ai.llm.providers import (
-    MockProvider,
+from app.services.ai.providers import (
+    ProviderFactory,
 )
 
 
 class LLMFactory:
     """
-    Creates LLM providers.
+    Enterprise LLM Factory.
     """
 
     @staticmethod
-    def create() -> BaseLLMProvider:
+    def create():
 
-        return MockProvider()
+        return ProviderFactory.create()

@@ -4,6 +4,10 @@ Enterprise planner agent.
 
 from __future__ import annotations
 
+from app.services.ai.copilot.context.models import (
+    RetrievalContext,
+)
+
 from .base import BasePlanner
 from .models import ExecutionPlan
 from .rules import PlannerRules
@@ -13,18 +17,13 @@ class PlannerAgent(
     BasePlanner,
 ):
     """
-    Converts a user question into
-    an execution plan.
-
-    The planner never executes work.
-    It only decides the sequence of
-    operations required to answer
-    the request.
+    Enterprise planner.
     """
 
     def build_plan(
         self,
         question: str,
+        context: RetrievalContext | None = None,
     ) -> ExecutionPlan:
 
         steps, reason = (
@@ -33,7 +32,16 @@ class PlannerAgent(
             )
         )
 
+        conversation = []
+
+        if context is not None:
+
+            conversation = (
+                context.conversation
+            )
+
         return ExecutionPlan(
             steps=steps,
             reasoning=reason,
+            conversation=conversation,
         )

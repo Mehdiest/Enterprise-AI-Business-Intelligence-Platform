@@ -22,9 +22,14 @@ class ExecutionEngine(
 ):
     """
     Executes an execution plan.
+
+    Each execution step is resolved
+    through the AgentRegistry.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+    ) -> None:
 
         self.registry = (
             AgentRegistry()
@@ -34,8 +39,12 @@ class ExecutionEngine(
         self,
         context: ExecutionContext,
     ) -> ExecutionContext:
+        """
+        Execute the current execution plan.
+        """
 
         if context.plan is None:
+
             return context
 
         for step in context.plan.steps:
@@ -46,10 +55,12 @@ class ExecutionEngine(
                 )
             )
 
-            if handler:
+            if handler is None:
 
-                context = handler(
-                    context
-                )
+                continue
+
+            context = handler(
+                context
+            )
 
         return context

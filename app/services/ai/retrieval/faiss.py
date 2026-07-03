@@ -17,16 +17,16 @@ from app.services.ai.retrieval.base import (
 )
 
 
-class FAISSRetriever(
-    BaseRetriever,
-):
+class FAISSRetriever(BaseRetriever):
     """
-    Semantic retriever backed by FAISS.
+    Semantic retriever backed by
+    the configured vector store.
     """
 
     def __init__(
         self,
-    ):
+    ) -> None:
+
         self.embedding = (
             EmbeddingService()
         )
@@ -44,13 +44,13 @@ class FAISSRetriever(
         if store is None:
             return []
 
-        vector = (
+        embedding = (
             self.embedding.encode(
                 query
             )
         )
 
         return store.search(
-            vector,
+            embedding,
             top_k=top_k,
         )

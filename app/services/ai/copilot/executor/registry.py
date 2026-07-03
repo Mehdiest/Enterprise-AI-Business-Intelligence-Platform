@@ -18,25 +18,46 @@ from app.services.ai.copilot.agents.analytics import (
     AnalyticsAgent,
 )
 
+from app.services.ai.copilot.agents.sql import (
+    SQLAgent,
+)
+
+from app.services.ai.copilot.agents.response import (
+    ResponseAgent,
+)
+
 
 class AgentRegistry:
     """
     Registry for executable agents.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
 
         retriever = RetrieverAgent()
 
         analytics = AnalyticsAgent()
 
-        self._agents = {
+        sql = SQLAgent()
+
+        response = ResponseAgent()
+
+        self._agents: dict[
+            ExecutionStep,
+            Callable,
+        ] = {
 
             ExecutionStep.RETRIEVE:
                 retriever.run,
 
             ExecutionStep.ANALYTICS:
                 analytics.run,
+
+            ExecutionStep.SQL:
+                sql.run,
+
+            ExecutionStep.RESPONSE:
+                response.run,
 
         }
 
@@ -45,16 +66,59 @@ class AgentRegistry:
         step: ExecutionStep,
         handler: Callable,
     ) -> None:
+        """
+        Register a new execution handler.
+        """
 
         self._agents[
             step
         ] = handler
 
+    def unregister(
+        self,
+        step: ExecutionStep,
+    ) -> None:
+        """
+        Remove a registered handler.
+        """
+
+        self._agents.pop(
+            step,
+            None,
+        )
+
+    def exists(
+        self,
+        step: ExecutionStep,
+    ) -> bool:
+        """
+        Check whether a handler exists.
+        """
+
+        return (
+            step
+            in self._agents
+        )
+
     def get(
         self,
         step: ExecutionStep,
     ) -> Callable | None:
+        """
+        Return handler for a step.
+        """
 
         return self._agents.get(
             step
+        )
+
+    def available_steps(
+        self,
+    ) -> list[ExecutionStep]:
+        """
+        Return all registered steps.
+        """
+
+        return list(
+            self._agents.keys()
         )

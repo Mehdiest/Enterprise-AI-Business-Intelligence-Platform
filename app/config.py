@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
-    project_name: str = "AI Business Intelligence Platform"
+    project_name: str = "Enterprise AI Decision Intelligence Platform"
     api_v1_prefix: str = "/api/v1"
     postgres_host: str
     postgres_port: int

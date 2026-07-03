@@ -13,12 +13,38 @@ from app.schemas.ai import (
     SalesNarrativeResponse,
 )
 
-from app.services.ai import InsightService
+from app.services.ai import (
+    InsightService,
+)
+
+from app.services.ai.copilot import (
+    CopilotService,
+)
+
+from app.services.ai.copilot.models import (
+    CopilotRequest,
+    CopilotResponse,
+)
 
 router = APIRouter(
     prefix="/ai",
     tags=["AI"],
 )
+
+
+@router.post(
+    "/copilot",
+    response_model=CopilotResponse,
+)
+def copilot(
+    request: CopilotRequest,
+):
+
+    service = CopilotService()
+
+    return service.ask(
+        request
+    )
 
 
 @router.get(
@@ -28,6 +54,7 @@ router = APIRouter(
 def get_insights(
     db: Session = Depends(get_db),
 ):
+
     return InsightService(
         db
     ).generate_insight()
@@ -40,6 +67,7 @@ def get_insights(
 def executive_summary(
     db: Session = Depends(get_db),
 ):
+
     return InsightService(
         db
     ).executive_summary()
@@ -52,6 +80,7 @@ def executive_summary(
 def sales_narrative(
     db: Session = Depends(get_db),
 ):
+
     return InsightService(
         db
     ).sales_narrative()

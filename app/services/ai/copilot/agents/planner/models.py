@@ -28,8 +28,7 @@ class ExecutionStep(str, Enum):
 
 class ExecutionPlan(BaseModel):
     """
-    Ordered execution plan produced
-    by the planner.
+    Ordered execution plan.
     """
 
     steps: list[
@@ -39,3 +38,9 @@ class ExecutionPlan(BaseModel):
     )
 
     reasoning: str = ""
+
+    conversation: list[
+        str
+    ] = Field(
+        default_factory=list
+    )

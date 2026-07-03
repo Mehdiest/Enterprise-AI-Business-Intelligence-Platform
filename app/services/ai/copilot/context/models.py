@@ -4,7 +4,8 @@ Context models.
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from pydantic import Field
 
 
 class ContextDocument(BaseModel):
@@ -24,6 +25,12 @@ class RetrievalContext(BaseModel):
 
     documents: list[
         ContextDocument
+    ] = Field(
+        default_factory=list
+    )
+
+    conversation: list[
+        str
     ] = Field(
         default_factory=list
     )

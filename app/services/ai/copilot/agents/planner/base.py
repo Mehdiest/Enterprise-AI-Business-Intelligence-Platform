@@ -7,34 +7,24 @@ from __future__ import annotations
 from abc import ABC
 from abc import abstractmethod
 
+from app.services.ai.copilot.context.models import (
+    RetrievalContext,
+)
+
 from .models import ExecutionPlan
 
 
-class BasePlanner(ABC):
+class BasePlanner(
+    ABC,
+):
     """
-    Abstract planner interface.
-
-    Every planner implementation must
-    return an execution plan that can
-    later be executed by the orchestration
-    engine.
+    Abstract planner.
     """
 
     @abstractmethod
     def build_plan(
         self,
         question: str,
+        context: RetrievalContext | None = None,
     ) -> ExecutionPlan:
-        """
-        Build an execution plan.
-
-        Parameters
-        ----------
-        question:
-            User question.
-
-        Returns
-        -------
-        ExecutionPlan
-        """
         ...

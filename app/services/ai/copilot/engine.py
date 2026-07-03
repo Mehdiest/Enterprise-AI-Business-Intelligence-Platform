@@ -26,20 +26,12 @@ from app.services.ai.copilot.context_runtime import (
     ExecutionContext,
 )
 
-from app.services.ai.copilot.agents.analytics import (
-    AnalyticsAgent,
+from app.services.ai.copilot.executor import (
+    ExecutionEngine,
 )
 
-from app.services.ai.copilot.agents.retriever import (
-    RetrieverAgent,
-)
-
-from app.services.ai.copilot.agents.response import (
-    ResponseAgent,
-)
-
-from app.services.ai.copilot.agents.sql import (
-    SQLAgent,
+from app.services.ai.copilot.agents.planner import (
+    PlannerAgent,
 )
 
 from app.services.ai.llm import (
@@ -50,103 +42,126 @@ from app.services.ai.llm import (
 class CopilotEngine:
     """
     Enterprise Multi-Agent Engine.
+
+    Pipeline
+
+    Request
+        ↓
+    Intent
+        ↓
+    Context Builder
+        ↓
+    Planner
+        ↓
+    Executor
+        ↓
+    Prompt Builder
+        ↓
+    LLM
+        ↓
+    Response
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+    ) -> None:
 
-        self.intent = RuleBasedIntentClassifier()
+        self.intent = (
+            RuleBasedIntentClassifier()
+        )
 
-        self.context_builder = ContextBuilder()
+        self.context_builder = (
+            ContextBuilder()
+        )
 
-        self.retriever = RetrieverAgent()
+        self.planner = (
+            PlannerAgent()
+        )
 
-        self.analytics = AnalyticsAgent()
+        self.executor = (
+            ExecutionEngine()
+        )
 
-        self.sql = SQLAgent()
+        self.prompt_builder = (
+            PromptBuilder()
+        )
 
-        self.response = ResponseAgent()
-
-        self.prompt_builder = PromptBuilder()
-
-        self.llm = LLMFactory.create()
+        self.llm = (
+            LLMFactory.create()
+        )
 
     def process(
         self,
         request: CopilotRequest,
+        session_id: str | None = None,
     ) -> CopilotResponse:
 
         intent = self.intent.classify(
             request.question
         )
 
-        retrieval = self.context_builder.build(
-            request.question
+        retrieval = (
+            self.context_builder.build(
+                question=request.question,
+                session_id=session_id,
+            )
         )
 
-        runtime = ExecutionContext(
-            question=request.question
+        plan = (
+            self.planner.build_plan(
+                request.question,
+                retrieval,
+            )
         )
 
-        runtime.retrieved_context = retrieval
+        runtime = (
+            ExecutionContext(
+                question=request.question,
+            )
+        )
 
-        runtime = self.retriever.run(
+        runtime.plan = plan
+
+        runtime.retrieved_context = (
+            retrieval
+        )
+
+        runtime = self.executor.execute(
             runtime
         )
 
-        runtime = self.analytics.run(
-            runtime
+        prompt = (
+            self.prompt_builder.build(
+                question=runtime.question,
+                context=retrieval,
+            )
         )
 
-        runtime = self.sql.run(
-            runtime
+        answer = (
+            self.llm.generate(
+                prompt
+            )
         )
 
-        response_context = self.response.run(
-            runtime
-        )
+        sources: list[
+            SourceReference
+        ] = []
 
-        prompt = self.prompt_builder.build(
-
-            question=response_context.question,
-
-            context=retrieval,
-
-        )
-
-        answer = self.llm.generate(
-            prompt
-        )
-
-        sources = []
-
-        for index, text in enumerate(
-
-            response_context.citations,
-
+        for index, citation in enumerate(
+            runtime.citations,
             start=1,
-
         ):
 
             sources.append(
-
                 SourceReference(
-
                     id=str(index),
-
-                    text=text,
-
+                    text=citation,
                     score=1.0,
-
                 )
-
             )
 
         return CopilotResponse(
-
             answer=answer,
-
             confidence=intent.confidence,
-
             sources=sources,
-
         )
