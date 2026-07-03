@@ -7,6 +7,20 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-latest-green?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Live Demo](https://img.shields.io/badge/Live-Swagger%20Demo-brightgreen?logo=fastapi&logoColor=white)](https://enterprise-ai-bi-platform-production.up.railway.app/docs)
+
+---
+
+## Live Demo
+
+The full backend is deployed and publicly testable — no cloning or local setup required.
+
+**Swagger UI:** [enterprise-ai-bi-platform-production.up.railway.app/docs](https://enterprise-ai-bi-platform-production.up.railway.app/docs)
+
+Try it directly:
+- `POST /copilot/query` — ask a natural language business question
+- `GET /dashboard/kpis` — live KPIs computed from real warehouse data
+- `GET /health` — service health check
 
 ---
 
