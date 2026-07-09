@@ -4,17 +4,16 @@ Enterprise Copilot Router.
 
 from __future__ import annotations
 
+from fastapi import APIRouter
+from fastapi import Depends
+
+from app.dependencies.auth import get_current_user
+from app.models.user import User
+
 from app.schemas.copilot import (
     CopilotRequest,
     CopilotResponse,
     SourceItem,
-)
-
-from fastapi import APIRouter
-
-from app.schemas.copilot import (
-    CopilotRequest,
-    CopilotResponse,
 )
 
 from app.services.ai.copilot.service import (
@@ -35,7 +34,11 @@ service = CopilotService()
 )
 def query(
     request: CopilotRequest,
+    current_user: User = Depends(get_current_user),
 ):
+    """
+    Enterprise AI Copilot endpoint.
+    """
 
     response = service.ask(
         request,

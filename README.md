@@ -1,8 +1,8 @@
 # Enterprise AI Business Intelligence Platform
 
-> A production-grade AI-powered Business Intelligence platform combining JWT-secured REST APIs, a Multi-Agent AI Copilot, Star Schema data warehousing, ETL ingestion, and enterprise-ready infrastructure — **v1.0.0 Foundation Release**.
+> A production-grade AI-powered Business Intelligence platform combining JWT-secured REST APIs, a Multi-Agent AI Copilot, Star Schema data warehousing, ETL ingestion, and enterprise-ready infrastructure — **v1.0.2 Security Hardening Release**.
 
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/Mehdiest/Enterprise-AI-Business-Intelligence-Platform)
+[![Version](https://img.shields.io/badge/version-1.0.2-blue)](https://github.com/Mehdiest/Enterprise-AI-Business-Intelligence-Platform)
 [![Python](https://img.shields.io/badge/python-3.12-blue?logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-latest-green?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
@@ -389,14 +389,19 @@ make run
 
 ## Authentication Workflow
 
-The platform uses **OAuth2 Password Flow** with JWT tokens.
+The platform uses **OAuth2 Password Flow** with JWT tokens. Most endpoints are protected and require a valid token.
 
 **Register**
 ```bash
 POST /auth/register
 Content-Type: application/json
-
-{ "full_name": "John Doe", "email": "john@example.com", "password": "secret" }
+```
+```json
+{
+  "full_name": "Mehdi",
+  "email": "mehdi@test.com",
+  "password": "12345678"
+}
 ```
 
 **Login**
@@ -405,6 +410,14 @@ POST /auth/login
 ```
 ```json
 { "access_token": "eyJ...", "token_type": "bearer" }
+```
+
+**Protected Endpoints** — ETL ingestion and Copilot endpoints require authentication. Pass the token as a Bearer header:
+```bash
+curl -H "Authorization: Bearer <your_token>" \
+     -X POST http://localhost:8000/copilot/query \
+     -H "Content-Type: application/json" \
+     -d '{"question": "What are the top products by revenue?"}'
 ```
 
 **Swagger Authorization** — click **Authorize**, enter your credentials. Swagger automatically stores the JWT for all subsequent requests.
@@ -481,10 +494,12 @@ curl -X POST http://localhost:8000/copilot/query \
 - JWT tokens with configurable expiry (`ACCESS_TOKEN_EXPIRE_MINUTES`)
 - Passwords hashed with bcrypt (`passlib`)
 - OAuth2 Password Flow with Swagger integration
-- Protected endpoints via FastAPI dependency injection
+- Protected endpoints via FastAPI dependency injection (`get_current_user`)
+- Authentication required for ETL ingestion and Copilot endpoints
 - No secrets in source code — environment variable management only
 - SQLAlchemy ORM prevents SQL injection on application queries
-- Global exception middleware prevents stack trace leakage
+- Global exception middleware prevents stack trace leakage — full traces available in server logs only
+- Invalid CSV uploads return `HTTP 400` instead of exposing internal errors
 
 ---
 
@@ -493,6 +508,7 @@ curl -X POST http://localhost:8000/copilot/query \
 | Version | Status | Focus |
 |---|---|---|
 | **v1.0.0** | ✅ Released | JWT Auth, Multi-Agent Copilot, Star Schema, ETL, Dashboard APIs, Forecasting, Docker |
+| **v1.0.2** | ✅ Released | Security hardening — protected endpoints, safe exception handling, HTTP 400 on bad CSV |
 | **v1.1.0** | 🔜 Planned | Live SQL Tool Calling, Real RAG Knowledge Base, Persistent Conversation Memory |
 | **v1.2.0** | 🔜 Planned | Streaming Responses, Multi-Provider Routing, Agent Orchestration |
 | **v2.0** | 🔭 Vision | Autonomous Decision Intelligence |

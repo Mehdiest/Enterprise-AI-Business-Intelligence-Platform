@@ -10,6 +10,9 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 
+from app.dependencies.auth import get_current_user
+from app.models.user import User
+
 from app.schemas.dashboard import (
     KPIResponse,
     RegionSalesResponse,
@@ -42,6 +45,7 @@ router = APIRouter(
 )
 def get_kpis(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return KPIService(db).get_kpis()
 
@@ -52,6 +56,7 @@ def get_kpis(
 )
 def sales_by_region(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return AnalyticsService(db).sales_by_region()
 
@@ -62,6 +67,7 @@ def sales_by_region(
 )
 def top_products(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return AnalyticsService(db).top_products()
 
@@ -72,6 +78,7 @@ def top_products(
 )
 def monthly_sales(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return AnalyticsService(db).monthly_sales()
 
@@ -82,6 +89,7 @@ def monthly_sales(
 )
 def sales_by_region_chart(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return ChartService(db).sales_by_region_chart()
 
@@ -92,6 +100,7 @@ def sales_by_region_chart(
 )
 def top_products_chart(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return ChartService(db).top_products_chart()
 
@@ -102,6 +111,7 @@ def top_products_chart(
 )
 def monthly_sales_chart(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return ChartService(db).monthly_sales_chart()
 
@@ -112,6 +122,7 @@ def monthly_sales_chart(
 )
 def executive_summary(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return ChartService(db).executive_summary()
 
@@ -122,6 +133,7 @@ def executive_summary(
 )
 def revenue_forecast(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return ForecastService(db).revenue_forecast()
 
@@ -132,6 +144,7 @@ def revenue_forecast(
 )
 def growth_forecast(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return ForecastService(db).growth_forecast()
 
@@ -142,5 +155,6 @@ def growth_forecast(
 )
 def executive_forecast(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     return ForecastService(db).executive_forecast()

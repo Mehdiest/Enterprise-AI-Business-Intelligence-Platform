@@ -1,13 +1,17 @@
 """
 Data ingestion API endpoints.
 
-Responsibilities:
+Responsibilities
+----------------
 - Receive CSV uploads
-- Validate files
+- Validate uploaded files
 - Execute ETL pipeline
-- Load warehouse data
+- Load warehouse
 """
 
+from __future__ import annotations
+
+import logging
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
@@ -19,10 +23,18 @@ from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.dependencies.auth import get_current_user
+from app.models.user import User
 from app.schemas.data import IngestionResponse
-from app.services.etl.csv_loader import CSVLoader
+
+from app.services.etl.csv_loader import (
+    CSVLoader,
+    CSVLoaderError,
+)
 from app.services.etl.transformer import DataTransformer
 from app.services.etl.warehouse_loader import WarehouseLoader
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(
     prefix="/ingest",
@@ -37,10 +49,17 @@ router = APIRouter(
 async def ingest_csv(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     """
-    Upload CSV and load data into warehouse.
+    Upload CSV and execute ETL pipeline.
     """
+
+    if not file.filename:
+        raise HTTPException(
+            status_code=400,
+            detail="Filename is required.",
+        )
 
     if not file.filename.lower().endswith(".csv"):
         raise HTTPException(
@@ -48,38 +67,44 @@ async def ingest_csv(
             detail="Only CSV files are supported.",
         )
 
+    temp_path: Path | None = None
+
     try:
+
         with NamedTemporaryFile(
             delete=False,
             suffix=".csv",
         ) as temp_file:
 
-            content = await file.read()
-
-            temp_file.write(content)
-
+            temp_file.write(await file.read())
             temp_path = Path(temp_file.name)
 
         loader = CSVLoader()
 
-        dataframe = loader.load(temp_path)
+        dataframe = loader.load(
+            temp_path,
+        )
 
         rows_received = len(dataframe)
 
         transformer = DataTransformer()
 
         dataframe = transformer.transform(
-            dataframe
+            dataframe,
         )
 
         warehouse_loader = WarehouseLoader(
-            db
+            db,
         )
 
-        rows_loaded = (
-            warehouse_loader.load_dataframe(
-                dataframe
-            )
+        rows_loaded = warehouse_loader.load_dataframe(
+            dataframe,
+        )
+
+        logger.info(
+            "CSV ingested successfully | user=%s | rows=%s",
+            current_user.email,
+            rows_loaded,
         )
 
         return IngestionResponse(
@@ -89,16 +114,37 @@ async def ingest_csv(
             message="Data loaded successfully.",
         )
 
-    except Exception as exc:
+    except CSVLoaderError as exc:
+
+        logger.warning(
+            "Invalid CSV uploaded by user=%s : %s",
+            current_user.email,
+            str(exc),
+        )
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        )
+
+    except HTTPException:
+        raise
+
+    except Exception:
+
+        logger.exception(
+            "CSV ingestion failed for user=%s",
+            current_user.email,
+        )
 
         raise HTTPException(
             status_code=500,
-            detail=str(exc),
-        ) from exc
+            detail="Internal server error.",
+        )
 
     finally:
 
-        if "temp_path" in locals():
+        if temp_path and temp_path.exists():
             temp_path.unlink(
-                missing_ok=True
+                missing_ok=True,
             )
