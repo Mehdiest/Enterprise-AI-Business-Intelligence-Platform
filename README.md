@@ -31,22 +31,18 @@ The platform is live and publicly testable in under a minute:
 **1. Open Swagger UI**
 [enterprise-ai-bi-platform-production.up.railway.app/docs](https://enterprise-ai-bi-platform-production.up.railway.app/docs)
 
-**2. Register an account**
+**2. Authorize with the demo account**
 
-`POST /auth/register` — use any credentials you like:
-```json
-{
-  "full_name": "Your Name",
-  "email": "you@example.com",
-  "password": "yourpassword"
-}
+Click **Authorize** (top right) and enter:
 ```
+username: demo@enterprise-bi.com
+password: Demo@12345
+```
+Click **Authorize** → **Close**.
 
-**3. Authorize in Swagger**
+> This is a shared demo account for evaluation purposes. For production use, register your own account via `POST /auth/register`.
 
-Click **Authorize** (top right) → enter the same email and password you just registered with → click **Authorize**.
-
-**4. Try the AI Copilot**
+**3. Try the AI Copilot**
 
 `POST /copilot/query`
 ```json
@@ -55,7 +51,7 @@ Click **Authorize** (top right) → enter the same email and password you just r
 }
 ```
 
-**5. Check live KPIs**
+**4. Check live KPIs**
 
 `GET /dashboard/kpis` — returns real warehouse metrics instantly.
 
