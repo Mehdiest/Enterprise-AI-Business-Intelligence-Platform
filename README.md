@@ -24,6 +24,43 @@ Try it directly:
 
 ---
 
+## Quick Start — No Setup Required
+
+The platform is live and publicly testable in under a minute:
+
+**1. Open Swagger UI**
+[enterprise-ai-bi-platform-production.up.railway.app/docs](https://enterprise-ai-bi-platform-production.up.railway.app/docs)
+
+**2. Register an account**
+
+`POST /auth/register` — use any credentials you like:
+```json
+{
+  "full_name": "Your Name",
+  "email": "you@example.com",
+  "password": "yourpassword"
+}
+```
+
+**3. Authorize in Swagger**
+
+Click **Authorize** (top right) → enter the same email and password you just registered with → click **Authorize**.
+
+**4. Try the AI Copilot**
+
+`POST /copilot/query`
+```json
+{
+  "question": "What are the top products by revenue?"
+}
+```
+
+**5. Check live KPIs**
+
+`GET /dashboard/kpis` — returns real warehouse metrics instantly.
+
+---
+
 ## Overview
 
 The **Enterprise AI Business Intelligence Platform** is a production-oriented backend system designed for organizations that need intelligent, natural-language access to their data. It is not a simple dashboard — it is a modular, layered backend that provides:
