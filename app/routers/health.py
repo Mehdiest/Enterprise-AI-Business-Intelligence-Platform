@@ -1,12 +1,7 @@
 """
 Health endpoints.
 """
-
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
-from sqlalchemy import text
-
-from app.database import get_db
+from fastapi import APIRouter
 from app.monitoring import HealthChecker
 
 router = APIRouter(
@@ -31,8 +26,3 @@ def ready():
     return {"ready": data["database"]}
 
 
-@router.get("/admin/reset-db")
-async def reset_db(db: Session = Depends(get_db)):
-    db.execute(text("DROP TABLE IF EXISTS users CASCADE;"))
-    db.commit()
-    return {"status": "done"}
