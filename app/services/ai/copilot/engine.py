@@ -34,8 +34,8 @@ from app.services.ai.copilot.agents.planner import (
     PlannerAgent,
 )
 
-from app.services.ai.llm import (
-    LLMFactory,
+from app.services.ai.providers import (
+    ProviderFactory,
 )
 
 
@@ -87,7 +87,7 @@ class CopilotEngine:
         )
 
         self.llm = (
-            LLMFactory.create()
+            ProviderFactory.create()
         )
 
     def process(
@@ -134,6 +134,11 @@ class CopilotEngine:
             self.prompt_builder.build(
                 question=runtime.question,
                 context=retrieval,
+                sql_result=getattr(
+                    runtime,
+                    "sql_result",
+                    {},
+                ),
             )
         )
 

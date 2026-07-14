@@ -4,7 +4,7 @@ Application-wide constants.
 
 from __future__ import annotations
 
-APP_VERSION = "0.7.5"
+APP_VERSION = "1.0.3"
 
 API_PREFIX = "/api"
 

@@ -58,6 +58,7 @@ class PlannerRules:
             return (
                 [
                     ExecutionStep.RETRIEVE,
+                    ExecutionStep.SQL,
                     ExecutionStep.ANALYTICS,
                     ExecutionStep.RESPONSE,
                 ],

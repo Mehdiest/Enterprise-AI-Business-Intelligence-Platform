@@ -22,6 +22,7 @@ from fastapi import HTTPException
 from fastapi import UploadFile
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
@@ -68,6 +69,7 @@ async def ingest_csv(
         )
 
     temp_path: Path | None = None
+    max_bytes = settings.max_upload_mb * 1024 * 1024
 
     try:
 
@@ -76,7 +78,15 @@ async def ingest_csv(
             suffix=".csv",
         ) as temp_file:
 
-            temp_file.write(await file.read())
+            size = 0
+            while chunk := await file.read(65_536):
+                size += len(chunk)
+                if size > max_bytes:
+                    raise HTTPException(
+                        status_code=413,
+                        detail=f"File exceeds {settings.max_upload_mb} MB limit.",
+                    )
+                temp_file.write(chunk)
             temp_path = Path(temp_file.name)
 
         loader = CSVLoader()

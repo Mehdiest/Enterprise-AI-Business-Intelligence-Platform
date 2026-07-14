@@ -3,6 +3,9 @@ __pycache__/
 venv/
 .venv/
 .env
+.env.*
+!.env.example
+*.zip
 .vscode/
 .idea/
 .pytest_cache/

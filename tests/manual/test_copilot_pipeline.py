@@ -24,8 +24,8 @@ from app.services.ai.copilot.prompt import (
     PromptBuilder,
 )
 
-from app.services.ai.llm import (
-    LLMFactory,
+from app.services.ai.providers import (
+    ProviderFactory,
 )
 
 from app.services.ai.copilot.service import (
@@ -97,7 +97,7 @@ def main():
         section("STEP 5 - LLM")
 
         llm = (
-            LLMFactory.create()
+            ProviderFactory.create()
         )
 
         answer = (

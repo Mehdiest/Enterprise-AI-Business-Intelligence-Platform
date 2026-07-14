@@ -1,8 +1,8 @@
 # Enterprise AI Business Intelligence Platform
 
-> A production-grade AI-powered Business Intelligence platform combining JWT-secured REST APIs, a Multi-Agent AI Copilot, Star Schema data warehousing, ETL ingestion, and enterprise-ready infrastructure — **v1.0.2 Security Hardening Release**.
+> A production-grade AI-powered Business Intelligence platform combining JWT-secured REST APIs, a Multi-Agent AI Copilot, Star Schema data warehousing, ETL ingestion, and enterprise-ready infrastructure — **v1.0.3 Security & Copilot Data Pipeline Release**.
 
-[![Version](https://img.shields.io/badge/version-1.0.2-blue)](https://github.com/Mehdiest/Enterprise-AI-Business-Intelligence-Platform)
+[![Version](https://img.shields.io/badge/version-1.0.3-blue)](https://github.com/Mehdiest/Enterprise-AI-Business-Intelligence-Platform)
 [![Python](https://img.shields.io/badge/python-3.12-blue?logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-latest-green?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
@@ -159,6 +159,8 @@ Enterprise Response  (answer + confidence + cited sources)
 - User registration with email validation and bcrypt password hashing
 - JWT login via OAuth2 Password Flow
 - Protected endpoints with dependency injection (`get_current_user`)
+- Inactive-user guard — disabled accounts are rejected at token verification
+- In-memory sliding-window rate limiter on login (10 attempts / 60 seconds)
 - Role-aware user model; Swagger Authorization built-in
 
 ### Enterprise AI Copilot
@@ -170,7 +172,7 @@ Enterprise Response  (answer + confidence + cited sources)
 - **Prompt Builder** — enterprise prompt templates
 - **Conversation Memory** — in-memory session history with windowed context
 - **Response Pipeline** — citation engine, confidence scoring, hallucination guard, response validator
-- **LLM Provider Layer** — factory pattern; OpenAI provider implemented; mock provider for development; ready for Azure, Anthropic, Ollama
+- **LLM Provider Layer** — factory pattern; OpenAI provider implemented; mock provider echoes real warehouse data for keyless demos; ready for Azure, Anthropic, Ollama
 
 ### Dashboard & Analytics
 - KPI engine (total revenue, order count, averages)
@@ -180,13 +182,14 @@ Enterprise Response  (answer + confidence + cited sources)
 - Revenue forecast, growth forecast, executive forecast
 
 ### Data Platform
-- CSV upload endpoint with file validation
+- CSV upload endpoint with file validation and configurable size limit (`MAX_UPLOAD_MB`)
 - ETL pipeline: CSVLoader → DataTransformer → WarehouseLoader
 - PostgreSQL star schema warehouse with Alembic migrations
 - Dimension tables: `dim_customer`, `dim_product`, `dim_region`, `dim_channel`, `dim_date`
 - Fact table: `fact_sales` (quantity, amount, UUID foreign keys, audit timestamps, indexed)
 
 ### Enterprise Infrastructure
+- CORS middleware with configurable origins
 - Four middleware layers: RequestID, Timing, Logging, Exception
 - Health checker with live database probe and metrics collection
 - Feature flags: SQL Agent, RAG, Analytics, Streaming, Cache, Debug
@@ -265,9 +268,6 @@ Enterprise-AI-Business-Intelligence-Platform/
 │   │       │   ├── kpi.py
 │   │       │   ├── product.py
 │   │       │   └── region.py
-│   │       ├── llm/
-│   │       │   ├── base.py
-│   │       │   └── factory.py
 │   │       ├── providers/
 │   │       │   ├── base.py
 │   │       │   ├── factory.py
@@ -299,7 +299,8 @@ Enterprise-AI-Business-Intelligence-Platform/
 │   │   ├── health.py
 │   │   └── metrics.py
 │   └── dependencies/
-│       └── auth.py
+│       ├── auth.py
+│       └── rate_limit.py
 ├── alembic/
 │   └── versions/
 │       └── 001_initial_star_schema.py
@@ -360,11 +361,12 @@ cd Enterprise-AI-Business-Intelligence-Platform
 
 ### Environment Variables
 
-Create a `.env.docker` file in the project root:
+Create a `.env` file in the project root (see `.env.example`):
 
 ```env
 PROJECT_NAME=AI Business Intelligence Platform
 API_V1_PREFIX=/api/v1
+APP_ENV=development
 
 POSTGRES_HOST=postgres
 POSTGRES_PORT=5432
@@ -372,14 +374,18 @@ POSTGRES_DB=ai_bi
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
 
-SECRET_KEY=change-this-secret-key
+SECRET_KEY=replace-with-a-random-48-byte-token
 ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+CORS_ORIGINS=*
+MAX_UPLOAD_MB=10
 
 OPENAI_API_KEY=
 ```
 
-> Leave `OPENAI_API_KEY` empty to use the built-in development mock provider.
+> Leave `OPENAI_API_KEY` empty to use the mock provider — it echoes real warehouse query results for demo purposes.
+> Set `APP_ENV=production` to enforce a strong `SECRET_KEY` and disable automatic schema creation.
 
 ### Docker Setup (Recommended)
 
@@ -528,6 +534,12 @@ curl -X POST http://localhost:8000/copilot/query \
 - Passwords hashed with bcrypt (`passlib`)
 - OAuth2 Password Flow with Swagger integration
 - Protected endpoints via FastAPI dependency injection (`get_current_user`)
+- Inactive-user check — disabled accounts are blocked at token validation
+- Login rate limiting — sliding-window throttle prevents brute-force attacks
+- CORS middleware with configurable allowed origins (`CORS_ORIGINS`)
+- SECRET_KEY startup guard — rejects known-insecure defaults in production
+- Upload size limit — configurable `MAX_UPLOAD_MB` with streamed enforcement
+- Environment-aware schema management — `create_all` disabled in production
 - Authentication required for ETL ingestion and Copilot endpoints
 - No secrets in source code — environment variable management only
 - SQLAlchemy ORM prevents SQL injection on application queries
@@ -542,6 +554,7 @@ curl -X POST http://localhost:8000/copilot/query \
 |---|---|---|
 | **v1.0.0** | ✅ Released | JWT Auth, Multi-Agent Copilot, Star Schema, ETL, Dashboard APIs, Forecasting, Docker |
 | **v1.0.2** | ✅ Released | Security hardening — protected endpoints, safe exception handling, HTTP 400 on bad CSV |
+| **v1.0.3** | ✅ Released | Copilot data pipeline — SQL results flow into responses; CORS, rate limiting, upload limits, SECRET_KEY guard, duplicate module cleanup |
 | **v1.1.0** | 🔜 Planned | Live SQL Tool Calling, Real RAG Knowledge Base, Persistent Conversation Memory |
 | **v1.2.0** | 🔜 Planned | Streaming Responses, Multi-Provider Routing, Agent Orchestration |
 | **v2.0** | 🔭 Vision | Autonomous Decision Intelligence |
