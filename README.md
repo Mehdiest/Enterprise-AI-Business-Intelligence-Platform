@@ -8,7 +8,7 @@
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
-[![Live Demo](https://img.shields.io/badge/Live-Swagger%20Demo-brightgreen?logo=fastapi&logoColor=white)](https://enterprise-ai-bi-platform-production.up.railway.app/docs)
+[![Live Demo](https://img.shields.io/badge/Live-Swagger%20Demo-brightgreen?logo=fastapi&logoColor=white)](https://ai-bi-platform-ki1b.onrender.com/docs)
 
 ---
 
@@ -16,12 +16,14 @@
 
 The full backend is deployed and publicly testable — no cloning or local setup required.
 
-**Swagger UI:** [enterprise-ai-bi-platform-production.up.railway.app/docs](https://enterprise-ai-bi-platform-production.up.railway.app/docs)
+**Swagger UI:** [ai-bi-platform-ki1b.onrender.com/docs](https://ai-bi-platform-ki1b.onrender.com/docs)
 
 Try it directly:
 - `POST /copilot/query` — ask a natural language business question
 - `GET /dashboard/kpis` — live KPIs computed from real warehouse data
 - `GET /health` — service health check
+
+> **Note:** The platform is hosted on Render's free tier. If the first request takes 30–60 seconds to respond, the server is waking up from sleep — subsequent requests will be instant.
 
 ---
 
@@ -30,22 +32,27 @@ Try it directly:
 The platform is live and publicly testable in under a minute:
 
 **1. Open Swagger UI**
-[enterprise-ai-bi-platform-production.up.railway.app/docs](https://enterprise-ai-bi-platform-production.up.railway.app/docs)
+[ai-bi-platform-ki1b.onrender.com/docs](https://ai-bi-platform-ki1b.onrender.com/docs)
+
+> If the page takes 30–60 seconds to load, the server is waking up — wait and refresh.
 
 **2. Authorize with the demo account**
 
-Click **Authorize** (top right) and enter:
+- Click the green **Authorize** button (top right of the Swagger page)
+- Enter the following credentials:
 ```
 username: demo@enterprise-bi.com
 password: Demo@12345
 ```
-Click **Authorize** → **Close**.
+- Click **Authorize** → then **Close**
+
+You are now authenticated. All protected endpoints are unlocked.
 
 > This is a shared demo account for evaluation purposes. For production use, register your own account via `POST /auth/register`.
 
 **3. Try the AI Copilot**
 
-`POST /copilot/query`
+`POST /copilot/query` → **Try it out** → **Execute**:
 ```json
 {
   "question": "What are the top products by revenue?"
@@ -54,7 +61,7 @@ Click **Authorize** → **Close**.
 
 **4. Check live KPIs**
 
-`GET /dashboard/kpis` — returns real warehouse metrics instantly.
+`GET /dashboard/kpis` → **Try it out** → **Execute** — returns real warehouse metrics instantly.
 
 ---
 
