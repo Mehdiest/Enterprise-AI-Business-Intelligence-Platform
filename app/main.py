@@ -1,7 +1,5 @@
 """Application entry point."""
 
-import logging
-
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
@@ -23,12 +21,7 @@ from app.routers.dashboard import router as dashboard_router
 from app.routers.health import router as health_router
 from app.routers.ingest import router as ingest_router
 
-logger = logging.getLogger(__name__)
-
-if not settings.is_production:
-    Base.metadata.create_all(bind=engine)
-else:
-    logger.info("Production mode — schema managed via Alembic.")
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title=settings.project_name,
