@@ -6,6 +6,7 @@
 [![Python](https://img.shields.io/badge/python-3.12-blue?logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-latest-green?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Live Demo](https://img.shields.io/badge/Live-Swagger%20Demo-brightgreen?logo=fastapi&logoColor=white)](https://enterprise-ai-bi-platform-production.up.railway.app/docs)
 
@@ -437,9 +438,9 @@ Content-Type: application/json
 ```
 ```json
 {
-  "full_name": "Mehdi",
-  "email": "mehdi@test.com",
-  "password": "12345678"
+  "full_name": "Your Name",
+  "email": "you@example.com",
+  "password": "yourpassword"
 }
 ```
 
