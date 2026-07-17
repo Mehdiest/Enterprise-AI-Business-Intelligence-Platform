@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from app.models.user import User
 
-def test_full_user_journey(client, sample_csv):
-    """Register → Login → Ingest CSV → Query KPIs → Ask Copilot."""
+
+def test_full_user_journey(client, db, sample_csv):
+    """Register → Promote to Admin → Login → Ingest → KPIs → Copilot."""
 
     # Register
     res = client.post(
@@ -17,54 +19,97 @@ def test_full_user_journey(client, sample_csv):
     )
     assert res.status_code == 200
 
+    # Promote to Admin (required by RBAC)
+    user = (
+        db.query(User)
+        .filter(User.email == "e2e@test.com")
+        .first()
+    )
+
+    user.role = "admin"
+    db.commit()
+    db.refresh(user)
+
     # Login
     res = client.post(
         "/auth/login",
-        data={"username": "e2e@test.com", "password": "E2EPass@123"},
+        data={
+            "username": "e2e@test.com",
+            "password": "E2EPass@123",
+        },
     )
-    assert res.status_code == 200
-    token = res.json()["access_token"]
-    client.headers.update({"Authorization": f"Bearer {token}"})
 
-    # Ingest CSV
+    assert res.status_code == 200
+
+    token = res.json()["access_token"]
+
+    client.headers.update(
+        {
+            "Authorization": f"Bearer {token}",
+        }
+    )
+
+    # Ingest CSV (Admin)
     with open(sample_csv, "rb") as f:
         res = client.post(
             "/ingest/csv",
-            files={"file": ("sales.csv", f, "text/csv")},
+            files={
+                "file": (
+                    "sales.csv",
+                    f,
+                    "text/csv",
+                )
+            },
         )
+
     assert res.status_code == 200
     assert res.json()["rows_loaded"] > 0
 
     # KPIs
     res = client.get("/dashboard/kpis")
+
     assert res.status_code == 200
 
     # Copilot
     res = client.post(
         "/copilot/query",
-        json={"question": "What are the top products by revenue?"},
+        json={
+            "question": "What are the top products by revenue?"
+        },
     )
+
     assert res.status_code == 200
     assert len(res.json()["answer"]) > 0
 
 
 def test_unauthorized_access_blocked(client):
-    """All protected endpoints block unauthenticated requests."""
+    """Protected endpoints require authentication."""
+
     endpoints = [
         ("GET", "/auth/me"),
         ("POST", "/copilot/query"),
         ("POST", "/ingest/csv"),
         ("GET", "/dashboard/kpis"),
     ]
+
     for method, path in endpoints:
+
         if method == "GET":
             res = client.get(path)
         else:
             res = client.post(path, json={})
-        assert res.status_code in (401, 422), f"{method} {path} should be protected"
+
+        assert res.status_code in (401, 422)
 
 
 def test_health_always_accessible(client):
-    for path in ["/health", "/live", "/ready", "/"]:
+
+    for path in [
+        "/health",
+        "/live",
+        "/ready",
+        "/",
+    ]:
         res = client.get(path)
-        assert res.status_code == 200, f"{path} should be public"
+
+        assert res.status_code == 200
