@@ -4,47 +4,38 @@ Enterprise SQL Validator.
 
 from __future__ import annotations
 
+import sqlparse
+
 
 class SQLValidator:
     """
-    Prevent unsafe SQL execution.
+    Validate SQL queries before execution.
+
+    Only read-only SELECT statements are allowed.
     """
 
-    BLOCKED = (
+    ALLOWED_STATEMENT = "SELECT"
 
-        "drop",
+    def validate(self, sql: str) -> None:
+        """
+        Validate SQL query.
 
-        "delete",
+        Raises:
+            ValueError: If the SQL is invalid or not read-only.
+        """
+        statements = sqlparse.parse(sql)
 
-        "truncate",
+        if not statements:
+            raise ValueError("Empty SQL query.")
 
-        "update",
+        if len(statements) != 1:
+            raise ValueError("Only one SQL statement is allowed.")
 
-        "insert",
+        statement = statements[0]
 
-        "alter",
+        statement_type = statement.get_type().upper()
 
-        "create",
-
-        "attach",
-
-        "detach",
-
-    )
-
-    def validate(
-        self,
-        sql: str,
-    ) -> None:
-
-        query = sql.lower()
-
-        for keyword in self.BLOCKED:
-
-            if keyword in query:
-
-                raise ValueError(
-
-                    f"Unsafe SQL detected: {keyword}"
-
-                )
+        if statement_type != self.ALLOWED_STATEMENT:
+            raise ValueError(
+                f"Only SELECT statements are allowed. Found: {statement_type}"
+            )

@@ -11,6 +11,7 @@ from app.dependencies.auth import get_current_user
 from app.dependencies.rate_limit import login_rate_limit
 from app.models.user import User
 from app.schemas.auth import (
+    RefreshRequest,
     RegisterRequest,
     TokenResponse,
     UserResponse,
@@ -72,9 +73,30 @@ def login(
             detail="Invalid email or password.",
         )
 
-    return TokenResponse(
-        **token,
+    return TokenResponse(**token)
+
+
+@router.post(
+    "/refresh",
+    response_model=TokenResponse,
+)
+def refresh(
+    payload: RefreshRequest,
+    db: Session = Depends(get_db),
+):
+    service = AuthService(db)
+
+    token = service.refresh_access_token(
+        payload.refresh_token,
     )
+
+    if token is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid refresh token.",
+        )
+
+    return TokenResponse(**token)
 
 
 @router.get(

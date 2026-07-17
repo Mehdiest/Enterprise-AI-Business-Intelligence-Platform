@@ -1,8 +1,8 @@
 # Enterprise AI Business Intelligence Platform
 
-> A production-grade AI-powered Business Intelligence platform combining JWT-secured REST APIs, a Multi-Agent AI Copilot, Star Schema data warehousing, ETL ingestion, and enterprise-ready infrastructure — **v1.0.3 Security & Copilot Data Pipeline Release**.
+> A production-grade AI-powered Business Intelligence platform combining JWT-secured REST APIs, enterprise Role-Based Access Control (RBAC), a Multi-Agent AI Copilot, Star Schema data warehousing, ETL ingestion, and production-ready infrastructure — **v1.0.4 Enterprise Authorization & Security Release**.
 
-[![Version](https://img.shields.io/badge/version-1.0.3-blue)](https://github.com/Mehdiest/Enterprise-AI-Business-Intelligence-Platform)
+[![Version](https://img.shields.io/badge/version-1.0.4-blue)](https://github.com/Mehdiest/Enterprise-AI-Business-Intelligence-Platform)
 [![Python](https://img.shields.io/badge/python-3.12-blue?logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-latest-green?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
@@ -69,7 +69,9 @@ You are now authenticated. All protected endpoints are unlocked.
 
 The **Enterprise AI Business Intelligence Platform** is a production-oriented backend system designed for organizations that need intelligent, natural-language access to their data. It is not a simple dashboard — it is a modular, layered backend that provides:
 
-- Secure JWT authentication with role-based access
+- Secure JWT authentication with Access & Refresh Tokens
+- Enterprise Role-Based Access Control (RBAC)
+- Production-grade authorization dependency layer
 - A fully orchestrated Multi-Agent AI Copilot pipeline
 - Star schema data warehouse with CSV ingestion via ETL
 - Dashboard and forecasting APIs backed by real analytics services
@@ -164,12 +166,14 @@ Enterprise Response  (answer + confidence + cited sources)
 ## Features
 
 ### Authentication
-- User registration with email validation and bcrypt password hashing
-- JWT login via OAuth2 Password Flow
-- Protected endpoints with dependency injection (`get_current_user`)
-- Inactive-user guard — disabled accounts are rejected at token verification
-- In-memory sliding-window rate limiter on login (10 attempts / 60 seconds)
-- Role-aware user model; Swagger Authorization built-in
+- JWT Authentication (Access + Refresh Tokens)
+- Refresh Token rotation endpoint
+- Enterprise Role-Based Access Control (RBAC)
+- Centralized authorization dependency layer
+- Protected API endpoints with Admin / Analyst / User permissions
+- OAuth2 Password Flow integration with Swagger UI
+- Secure password hashing with bcrypt
+- Production-ready CORS whitelist configuration
 
 ### Enterprise AI Copilot
 - **Intent Classification** — rule-based classifier covering sales, product, region, KPI, trend, and summary intents with confidence scoring
@@ -198,6 +202,7 @@ Enterprise Response  (answer + confidence + cited sources)
 
 ### Enterprise Infrastructure
 - CORS middleware with configurable origins
+- SQLAlchemy connection pooling
 - Four middleware layers: RequestID, Timing, Logging, Exception
 - Health checker with live database probe and metrics collection
 - Feature flags: SQL Agent, RAG, Analytics, Streaming, Cache, Debug
@@ -309,6 +314,7 @@ Enterprise-AI-Business-Intelligence-Platform/
 │   └── dependencies/
 │       ├── auth.py
 │       └── rate_limit.py
+│       └── rbac.py
 ├── alembic/
 │   └── versions/
 │       └── 001_initial_star_schema.py
@@ -329,7 +335,7 @@ Enterprise-AI-Business-Intelligence-Platform/
 ## Screenshots
 
 **Swagger UI Overview**
-![Swagger Overview](assets/screenshots/01-swagger-overview.png)
+![Swagger Overview](assets/screenshots/01-swagger-overview.jpg)
 
 **Authentication Endpoints**
 ![Authentication Endpoints](assets/screenshots/02-auth-endpoints.png)
@@ -459,6 +465,16 @@ POST /auth/login
 { "access_token": "eyJ...", "token_type": "bearer" }
 ```
 
+**Refresh Access Token**
+
+```bash
+POST /auth/refresh
+
+{
+    "refresh_token":"..."
+}
+
+
 **Protected Endpoints** — ETL ingestion and Copilot endpoints require authentication. Pass the token as a Bearer header:
 ```bash
 curl -H "Authorization: Bearer <your_token>" \
@@ -476,10 +492,11 @@ curl -H "Authorization: Bearer <your_token>" \
 ### Authentication
 
 | Method | Endpoint | Description |
-|---|---|---|
-| POST | `/auth/register` | Register a new user |
-| POST | `/auth/login` | Login and receive JWT |
-| GET | `/auth/me` | Get current authenticated user |
+|---------|----------|-------------|
+| POST | `/auth/register` | Register new account |
+| POST | `/auth/login` | Obtain access & refresh tokens |
+| POST | `/auth/refresh` | Refresh access token |
+| GET | `/auth/me` | Current authenticated user |
 
 ### AI Copilot
 
@@ -538,9 +555,12 @@ curl -X POST http://localhost:8000/copilot/query \
 
 ## Security
 
-- JWT tokens with configurable expiry (`ACCESS_TOKEN_EXPIRE_MINUTES`)
-- Passwords hashed with bcrypt (`passlib`)
-- OAuth2 Password Flow with Swagger integration
+- Refresh Token authentication flow
+- Enterprise Role-Based Access Control (RBAC)
+- Centralized authorization dependency (RoleRequired)
+- Endpoint-level permission enforcement (Admin / Analyst / User)
+- SQL parsing and validation using sqlparse
+- SQLAlchemy connection pooling for production workloads
 - Protected endpoints via FastAPI dependency injection (`get_current_user`)
 - Inactive-user check — disabled accounts are blocked at token validation
 - Login rate limiting — sliding-window throttle prevents brute-force attacks
@@ -563,6 +583,7 @@ curl -X POST http://localhost:8000/copilot/query \
 | **v1.0.0** | ✅ Released | JWT Auth, Multi-Agent Copilot, Star Schema, ETL, Dashboard APIs, Forecasting, Docker |
 | **v1.0.2** | ✅ Released | Security hardening — protected endpoints, safe exception handling, HTTP 400 on bad CSV |
 | **v1.0.3** | ✅ Released | Copilot data pipeline — SQL results flow into responses; CORS, rate limiting, upload limits, SECRET_KEY guard, duplicate module cleanup |
+| **v1.0.4** | ✅ Released | Enterprise RBAC, Refresh Token flow, SQL Validator, SQLAlchemy Connection Pooling, Production Authorization |
 | **v1.1.0** | 🔜 Planned | Live SQL Tool Calling, Real RAG Knowledge Base, Persistent Conversation Memory |
 | **v1.2.0** | 🔜 Planned | Streaming Responses, Multi-Provider Routing, Agent Orchestration |
 | **v2.0** | 🔭 Vision | Autonomous Decision Intelligence |

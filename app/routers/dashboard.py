@@ -5,13 +5,16 @@ Provides analytics, charts, KPI data,
 and predictive forecasting services.
 """
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
+from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.database import get_db
 
-from app.dependencies.auth import get_current_user
-from app.models.user import User
+from app.dependencies.rbac import (
+    require_admin,
+    require_viewer,
+)
 
 from app.schemas.dashboard import (
     KPIResponse,
@@ -39,13 +42,17 @@ router = APIRouter(
 )
 
 
+# ==========================================================
+# Dashboard (Viewer + Admin)
+# ==========================================================
+
 @router.get(
     "/kpis",
     response_model=KPIResponse,
 )
 def get_kpis(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_viewer),
 ):
     return KPIService(db).get_kpis()
 
@@ -56,7 +63,7 @@ def get_kpis(
 )
 def sales_by_region(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_viewer),
 ):
     return AnalyticsService(db).sales_by_region()
 
@@ -67,7 +74,7 @@ def sales_by_region(
 )
 def top_products(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_viewer),
 ):
     return AnalyticsService(db).top_products()
 
@@ -78,7 +85,7 @@ def top_products(
 )
 def monthly_sales(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_viewer),
 ):
     return AnalyticsService(db).monthly_sales()
 
@@ -89,7 +96,7 @@ def monthly_sales(
 )
 def sales_by_region_chart(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_viewer),
 ):
     return ChartService(db).sales_by_region_chart()
 
@@ -100,7 +107,7 @@ def sales_by_region_chart(
 )
 def top_products_chart(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_viewer),
 ):
     return ChartService(db).top_products_chart()
 
@@ -111,7 +118,7 @@ def top_products_chart(
 )
 def monthly_sales_chart(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_viewer),
 ):
     return ChartService(db).monthly_sales_chart()
 
@@ -122,10 +129,14 @@ def monthly_sales_chart(
 )
 def executive_summary(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_viewer),
 ):
     return ChartService(db).executive_summary()
 
+
+# ==========================================================
+# Forecast (Admin only)
+# ==========================================================
 
 @router.get(
     "/forecast/revenue",
@@ -133,7 +144,7 @@ def executive_summary(
 )
 def revenue_forecast(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_admin),
 ):
     return ForecastService(db).revenue_forecast()
 
@@ -144,7 +155,7 @@ def revenue_forecast(
 )
 def growth_forecast(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_admin),
 ):
     return ForecastService(db).growth_forecast()
 
@@ -155,6 +166,6 @@ def growth_forecast(
 )
 def executive_forecast(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_admin),
 ):
     return ForecastService(db).executive_forecast()

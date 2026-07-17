@@ -10,8 +10,9 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 
-from app.dependencies.auth import get_current_user
-from app.models.user import User
+from app.dependencies.rbac import (
+    require_admin,
+)
 
 from app.schemas.ai import (
     InsightResponse,
@@ -44,7 +45,7 @@ router = APIRouter(
 )
 def copilot(
     request: CopilotRequest,
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_admin),
 ):
     """
     Enterprise AI Copilot endpoint.
@@ -53,7 +54,7 @@ def copilot(
     service = CopilotService()
 
     return service.ask(
-        request
+        request,
     )
 
 
@@ -63,14 +64,14 @@ def copilot(
 )
 def get_insights(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_admin),
 ):
     """
     Generate AI insights.
     """
 
     return InsightService(
-        db
+        db,
     ).generate_insight()
 
 
@@ -80,14 +81,14 @@ def get_insights(
 )
 def executive_summary(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_admin),
 ):
     """
     Generate executive summary.
     """
 
     return InsightService(
-        db
+        db,
     ).executive_summary()
 
 
@@ -97,12 +98,12 @@ def executive_summary(
 )
 def sales_narrative(
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_admin),
 ):
     """
     Generate sales narrative.
     """
 
     return InsightService(
-        db
+        db,
     ).sales_narrative()

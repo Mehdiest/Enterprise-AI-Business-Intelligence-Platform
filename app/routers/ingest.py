@@ -24,8 +24,9 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.database import get_db
-from app.dependencies.auth import get_current_user
-from app.models.user import User
+
+from app.dependencies.rbac import require_admin
+
 from app.schemas.data import IngestionResponse
 
 from app.services.etl.csv_loader import (
@@ -50,7 +51,7 @@ router = APIRouter(
 async def ingest_csv(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user=Depends(require_admin),
 ):
     """
     Upload CSV and execute ETL pipeline.
@@ -79,15 +80,26 @@ async def ingest_csv(
         ) as temp_file:
 
             size = 0
+
             while chunk := await file.read(65_536):
+
                 size += len(chunk)
+
                 if size > max_bytes:
+
                     raise HTTPException(
                         status_code=413,
-                        detail=f"File exceeds {settings.max_upload_mb} MB limit.",
+                        detail=(
+                            f"File exceeds "
+                            f"{settings.max_upload_mb} MB limit."
+                        ),
                     )
+
                 temp_file.write(chunk)
-            temp_path = Path(temp_file.name)
+
+            temp_path = Path(
+                temp_file.name,
+            )
 
         loader = CSVLoader()
 
@@ -95,7 +107,9 @@ async def ingest_csv(
             temp_path,
         )
 
-        rows_received = len(dataframe)
+        rows_received = len(
+            dataframe,
+        )
 
         transformer = DataTransformer()
 
@@ -154,7 +168,10 @@ async def ingest_csv(
 
     finally:
 
-        if temp_path and temp_path.exists():
+        if (
+            temp_path
+            and temp_path.exists()
+        ):
             temp_path.unlink(
                 missing_ok=True,
             )
