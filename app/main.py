@@ -1,19 +1,20 @@
 """Application entry point."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import Base, engine
-from app.models.user import User  # noqa: F401 — register model
-from app.models.warehouse import *  # noqa: F401,F403 — register models
-
 from app.middleware import (
     ExceptionMiddleware,
     LoggingMiddleware,
     RequestIDMiddleware,
     TimingMiddleware,
 )
+from app.models.user import User  # noqa: F401 — register model
+from app.models.warehouse import *  # noqa: F401,F403 — register models
 from app.routers.ai import router as ai_router
 from app.routers.auth import router as auth_router
 from app.routers.copilot import router as copilot_router
@@ -21,11 +22,20 @@ from app.routers.dashboard import router as dashboard_router
 from app.routers.health import router as health_router
 from app.routers.ingest import router as ingest_router
 
-Base.metadata.create_all(bind=engine)
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    """Create tables after the async engine is available, then dispose it cleanly."""
+    async with engine.begin() as connection:
+        await connection.run_sync(Base.metadata.create_all)
+    yield
+    await engine.dispose()
+
 
 app = FastAPI(
     title=settings.project_name,
-    version="1.0.3",
+    version="1.0.4",
+    lifespan=lifespan,
 )
 
 app.add_middleware(

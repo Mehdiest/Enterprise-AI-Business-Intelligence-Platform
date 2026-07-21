@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies.auth import get_current_user
@@ -28,19 +26,19 @@ router = APIRouter(
     "/register",
     response_model=UserResponse,
 )
-def register(
+async def register(
     payload: RegisterRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     service = AuthService(db)
 
     try:
-        user = service.register(payload)
+        user = await service.register(payload)
     except ValueError as exc:
         raise HTTPException(
             status_code=400,
             detail=str(exc),
-        )
+        ) from exc
 
     return UserResponse(
         id=str(user.id),
@@ -56,13 +54,13 @@ def register(
     response_model=TokenResponse,
     dependencies=[Depends(login_rate_limit)],
 )
-def login(
+async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     service = AuthService(db)
 
-    token = service.login(
+    token = await service.login(
         email=form_data.username,
         password=form_data.password,
     )
@@ -80,13 +78,13 @@ def login(
     "/refresh",
     response_model=TokenResponse,
 )
-def refresh(
+async def refresh(
     payload: RefreshRequest,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ):
     service = AuthService(db)
 
-    token = service.refresh_access_token(
+    token = await service.refresh_access_token(
         payload.refresh_token,
     )
 
@@ -103,7 +101,7 @@ def refresh(
     "/me",
     response_model=UserResponse,
 )
-def me(
+async def me(
     current_user: User = Depends(get_current_user),
 ):
     return UserResponse(

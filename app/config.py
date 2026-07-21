@@ -7,8 +7,7 @@ from __future__ import annotations
 import logging
 
 from pydantic import model_validator
-from pydantic_settings import BaseSettings
-from pydantic_settings import SettingsConfigDict
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
 
@@ -81,6 +80,10 @@ class Settings(BaseSettings):
 
     openai_api_key: str = ""
 
+    # Conversation memory
+    memory_ttl_seconds: int = 86_400
+    memory_database_path: str = ".memory.sqlite3"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False,
@@ -92,10 +95,7 @@ class Settings(BaseSettings):
         Return True when running in production.
         """
 
-        return (
-            self.app_env.strip().lower()
-            == "production"
-        )
+        return self.app_env.strip().lower() == "production"
 
     @property
     def database_url(self) -> str:
@@ -104,7 +104,7 @@ class Settings(BaseSettings):
         """
 
         return (
-            f"postgresql+psycopg2://"
+            f"postgresql+asyncpg://"
             f"{self.postgres_user}:"
             f"{self.postgres_password}@"
             f"{self.postgres_host}:"
@@ -119,13 +119,11 @@ class Settings(BaseSettings):
         """
 
         return [
-            origin.strip()
-            for origin in self.cors_origins.split(",")
-            if origin.strip()
+            origin.strip() for origin in self.cors_origins.split(",") if origin.strip()
         ]
 
     @model_validator(mode="after")
-    def validate_secret_key(self) -> "Settings":
+    def validate_secret_key(self) -> Settings:
         """
         Reject insecure SECRET_KEY values in production.
         """
@@ -134,16 +132,11 @@ class Settings(BaseSettings):
             return self
 
         if self.is_production:
-
             raise ValueError(
-                "SECRET_KEY is insecure. "
-                "Set a strong random value before deployment."
+                "SECRET_KEY is insecure. Set a strong random value before deployment."
             )
 
-        logger.warning(
-            "Using insecure SECRET_KEY. "
-            "Allowed only in development."
-        )
+        logger.warning("Using insecure SECRET_KEY. Allowed only in development.")
 
         return self
 

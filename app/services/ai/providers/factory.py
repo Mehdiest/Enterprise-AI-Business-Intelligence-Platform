@@ -4,7 +4,7 @@ Enterprise Provider Factory.
 
 from __future__ import annotations
 
-import os
+from app.config import settings
 
 from .base import BaseLLMProvider
 from .mock_provider import MockProvider
@@ -19,13 +19,11 @@ class ProviderFactory:
 
     @staticmethod
     def create() -> BaseLLMProvider:
+        """
+        Create configured LLM provider.
+        """
 
-        api_key = os.getenv(
-            "OPENAI_API_KEY"
-        )
-
-        if api_key:
-
+        if settings.openai_api_key:
             return OpenAIProvider()
 
         return MockProvider()

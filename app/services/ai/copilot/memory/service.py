@@ -30,14 +30,14 @@ class MemoryService:
             ConversationSession()
         )
 
-    def add_message(
+    async def add_message(
         self,
         session_id: str,
         role: str,
         content: str,
     ) -> None:
 
-        self.store.add(
+        await self.store.add(
             session_id,
             ConversationMessage(
                 role=role,
@@ -45,21 +45,21 @@ class MemoryService:
             ),
         )
 
-    def history(
+    async def history(
         self,
         session_id: str,
     ):
 
-        return self.store.history(
+        return await self.store.history(
             session_id
         )
 
-    def context(
+    async def context(
         self,
         session_id: str,
     ):
 
-        history = self.history(
+        history = await self.history(
             session_id
         )
 
@@ -67,11 +67,11 @@ class MemoryService:
             history
         )
 
-    def clear(
+    async def clear(
         self,
         session_id: str,
     ) -> None:
 
-        self.store.clear(
+        await self.store.clear(
             session_id
         )

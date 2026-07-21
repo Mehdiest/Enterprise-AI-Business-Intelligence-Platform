@@ -1,8 +1,8 @@
 # Enterprise AI Business Intelligence Platform
 
-> A production-grade AI-powered Business Intelligence platform combining JWT-secured REST APIs, enterprise Role-Based Access Control (RBAC), a Multi-Agent AI Copilot, Star Schema data warehousing, ETL ingestion, and production-ready infrastructure — **v1.0.4 Enterprise Authorization & Security Release**.
+> A production-grade AI-powered Business Intelligence platform combining JWT-secured REST APIs, enterprise Role-Based Access Control (RBAC), a Multi-Agent AI Copilot, Star Schema data warehousing, ETL ingestion, and production-ready infrastructure — **v1.0.5 Full Async Migration & Stability Release**.
 
-[![Version](https://img.shields.io/badge/version-1.0.4-blue)](https://github.com/Mehdiest/Enterprise-AI-Business-Intelligence-Platform)
+[![Version](https://img.shields.io/badge/version-1.0.5-blue)](https://github.com/Mehdiest/Enterprise-AI-Business-Intelligence-Platform)
 [![Python](https://img.shields.io/badge/python-3.12-blue?logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-latest-green?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
@@ -36,21 +36,27 @@ The platform is live and publicly testable in under a minute:
 
 > If the page takes 30–60 seconds to load, the server is waking up — wait and refresh.
 
-**2. Authorize with the demo account**
+**2. Log in with the demo account**
 
-- Click the green **Authorize** button (top right of the Swagger page)
+- Open `POST /auth/login` → **Try it out**
 - Enter the following credentials:
 ```
 username: demo@enterprise-bi.com
 password: Demo@12345
 ```
+- Click **Execute** and copy the `access_token` from the response body
+
+**3. Authorize Swagger with the token**
+
+- Click the green **Authorize** button (top right of the Swagger page)
+- Paste the same demo credentials (`username` / `password`) into the OAuth2 form
 - Click **Authorize** → then **Close**
 
 You are now authenticated. All protected endpoints are unlocked.
 
 > This is a shared demo account for evaluation purposes. For production use, register your own account via `POST /auth/register`.
 
-**3. Try the AI Copilot**
+**4. Try the AI Copilot**
 
 `POST /copilot/query` → **Try it out** → **Execute**:
 ```json
@@ -59,7 +65,7 @@ You are now authenticated. All protected endpoints are unlocked.
 }
 ```
 
-**4. Check live KPIs**
+**5. Check live KPIs**
 
 `GET /dashboard/kpis` → **Try it out** → **Execute** — returns real warehouse metrics instantly.
 
@@ -179,10 +185,11 @@ Enterprise Response  (answer + confidence + cited sources)
 - **Intent Classification** — rule-based classifier covering sales, product, region, KPI, trend, and summary intents with confidence scoring
 - **Context Builder** — builds retrieval context per question and session
 - **Planner Agent** — generates structured execution plans
-- **Execution Engine** — dispatches agents from an extensible registry
+- **Execution Engine** — fully async dispatch of agents from an extensible registry; transparently awaits both sync and async agents
 - **Agent Registry** — Retriever, SQL, Analytics, Response agents
+- **SQL Agent** — schema-aware, LLM-backed SQL generation with a safe, schema-aware rule-based fallback whenever the LLM is unavailable or returns unsafe SQL
 - **Prompt Builder** — enterprise prompt templates
-- **Conversation Memory** — in-memory session history with windowed context
+- **Conversation Memory** — SQLite-backed, TTL-bound session history with automatic garbage collection (`collect_garbage()`); all disk I/O runs off the event loop via `asyncio.to_thread`
 - **Response Pipeline** — citation engine, confidence scoring, hallucination guard, response validator
 - **LLM Provider Layer** — factory pattern; OpenAI provider implemented; mock provider echoes real warehouse data for keyless demos; ready for Azure, Anthropic, Ollama
 
@@ -196,6 +203,7 @@ Enterprise Response  (answer + confidence + cited sources)
 ### Data Platform
 - CSV upload endpoint with file validation and configurable size limit (`MAX_UPLOAD_MB`)
 - ETL pipeline: CSVLoader → DataTransformer → WarehouseLoader
+- Async batch warehouse loading via `bulk_insert_mappings`, run through `AsyncSession`
 - PostgreSQL star schema warehouse with Alembic migrations
 - Dimension tables: `dim_customer`, `dim_product`, `dim_region`, `dim_channel`, `dim_date`
 - Fact table: `fact_sales` (quantity, amount, UUID foreign keys, audit timestamps, indexed)
@@ -216,11 +224,11 @@ Enterprise Response  (answer + confidence + cited sources)
 
 | Layer | Technologies |
 |---|---|
-| **Backend** | Python 3.12, FastAPI, SQLAlchemy, Pydantic v2, Pydantic Settings, Alembic, Uvicorn |
+| **Backend** | Python 3.12, FastAPI, SQLAlchemy 2.0 (async), Pydantic v2, Pydantic Settings, Alembic, Uvicorn |
 | **Auth** | JWT (python-jose), bcrypt, OAuth2 Password Flow |
-| **AI / ML** | Multi-Agent Architecture, FAISS, Sentence Transformers, RAG, LangChain |
-| **LLM** | OpenAI SDK (gpt-4.1-mini), Mock Provider, Factory Pattern |
-| **Data** | PostgreSQL, Star Schema, Pandas, NumPy, Scikit-Learn, OpenPyXL |
+| **AI / ML** | Multi-Agent Architecture (fully async pipeline), FAISS, Sentence Transformers, RAG, LangChain |
+| **LLM** | OpenAI SDK (gpt-4.1-mini), Mock Provider, Factory Pattern (sync- and async-compatible) |
+| **Data** | PostgreSQL (asyncpg driver), Star Schema, Pandas, NumPy, Scikit-Learn, OpenPyXL |
 | **Infrastructure** | Docker, Docker Compose, Loguru, psutil, Feature Flags |
 | **Dev Tools** | Git, GitHub, Pytest, Black, Ruff, VS Code, Makefile |
 
@@ -584,9 +592,24 @@ curl -X POST http://localhost:8000/copilot/query \
 | **v1.0.2** | ✅ Released | Security hardening — protected endpoints, safe exception handling, HTTP 400 on bad CSV |
 | **v1.0.3** | ✅ Released | Copilot data pipeline — SQL results flow into responses; CORS, rate limiting, upload limits, SECRET_KEY guard, duplicate module cleanup |
 | **v1.0.4** | ✅ Released | Enterprise RBAC, Refresh Token flow, SQL Validator, SQLAlchemy Connection Pooling, Production Authorization |
+| **v1.0.5** | ✅ Released | Full async migration — `asyncpg` engine, async-compatible auth/ingest/dashboard/insights routers, async batch warehouse loading, schema-aware LLM-backed SQL generation with safe fallback, SQLite-backed TTL conversation memory with non-blocking I/O |
 | **v1.1.0** | 🔜 Planned | Live SQL Tool Calling, Real RAG Knowledge Base, Persistent Conversation Memory |
 | **v1.2.0** | 🔜 Planned | Streaming Responses, Multi-Provider Routing, Agent Orchestration |
 | **v2.0** | 🔭 Vision | Autonomous Decision Intelligence |
+
+---
+
+## Changelog
+
+### v1.0.5 — Full Async Migration & Stability Release
+
+- **Database** — migrated from a sync `psycopg2` engine to `create_async_engine` + `async_sessionmaker` (asyncpg driver); application lifecycle now creates/disposes the engine through FastAPI's async `lifespan` handler.
+- **Routers** — `auth`, `ingest`, `dashboard`, and `ai/insights` fully converted to `AsyncSession`.
+- **Warehouse Loader** — rewritten for async batch loading via `bulk_insert_mappings`, run through `AsyncSession.run_sync`.
+- **SQL Agent** — SQL generation is now schema-aware and LLM-backed, with a safe rule-based fallback whenever the LLM is unavailable, errors, or returns unsafe SQL.
+- **Copilot Execution Engine** — dispatches both sync and async agents transparently; the full pipeline (Retriever → SQL → Analytics → Response) is now async end-to-end.
+- **Conversation Memory** — moved from an in-memory dict to a SQLite-backed store with TTL expiry and `collect_garbage()`; all disk I/O now runs off the event loop via `asyncio.to_thread` to avoid blocking concurrent requests.
+- **Session handling** — `expire_on_commit=False` set on the session factory to prevent unawaited lazy-loads on ORM attributes accessed after a commit.
 
 ---
 

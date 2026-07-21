@@ -1,171 +1,103 @@
-"""
-Dashboard API endpoints.
+"""Async dashboard endpoints."""
 
-Provides analytics, charts, KPI data,
-and predictive forecasting services.
-"""
-
-from fastapi import APIRouter
-from fastapi import Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-
-from app.dependencies.rbac import (
-    require_admin,
-    require_viewer,
-)
-
+from app.dependencies.rbac import require_admin, require_viewer
 from app.schemas.dashboard import (
-    KPIResponse,
-    RegionSalesResponse,
-    ProductSalesResponse,
-    MonthlySalesResponse,
     ChartDatasetResponse,
     ExecutiveSummaryResponse,
+    KPIResponse,
+    MonthlySalesResponse,
+    ProductSalesResponse,
+    RegionSalesResponse,
 )
-
 from app.schemas.forecast import (
-    RevenueForecastResponse,
-    GrowthForecastResponse,
     ExecutiveForecastResponse,
+    GrowthForecastResponse,
+    RevenueForecastResponse,
 )
-
-from app.services.analytics.kpi import KPIService
-from app.services.analytics.stats import AnalyticsService
 from app.services.analytics.charts import ChartService
 from app.services.analytics.forecast import ForecastService
+from app.services.analytics.kpi import KPIService
+from app.services.analytics.stats import AnalyticsService
 
-router = APIRouter(
-    prefix="/dashboard",
-    tags=["Dashboard"],
-)
+router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 
-# ==========================================================
-# Dashboard (Viewer + Admin)
-# ==========================================================
-
-@router.get(
-    "/kpis",
-    response_model=KPIResponse,
-)
-def get_kpis(
-    db: Session = Depends(get_db),
-    current_user=Depends(require_viewer),
+@router.get("/kpis", response_model=KPIResponse)
+async def get_kpis(
+    db: AsyncSession = Depends(get_db), current_user=Depends(require_viewer)
 ):
-    return KPIService(db).get_kpis()
+    return await KPIService(db).get_kpis()
 
 
-@router.get(
-    "/sales-by-region",
-    response_model=list[RegionSalesResponse],
-)
-def sales_by_region(
-    db: Session = Depends(get_db),
-    current_user=Depends(require_viewer),
+@router.get("/sales-by-region", response_model=list[RegionSalesResponse])
+async def sales_by_region(
+    db: AsyncSession = Depends(get_db), current_user=Depends(require_viewer)
 ):
-    return AnalyticsService(db).sales_by_region()
+    return await AnalyticsService(db).sales_by_region()
 
 
-@router.get(
-    "/top-products",
-    response_model=list[ProductSalesResponse],
-)
-def top_products(
-    db: Session = Depends(get_db),
-    current_user=Depends(require_viewer),
+@router.get("/top-products", response_model=list[ProductSalesResponse])
+async def top_products(
+    db: AsyncSession = Depends(get_db), current_user=Depends(require_viewer)
 ):
-    return AnalyticsService(db).top_products()
+    return await AnalyticsService(db).top_products()
 
 
-@router.get(
-    "/monthly-sales",
-    response_model=list[MonthlySalesResponse],
-)
-def monthly_sales(
-    db: Session = Depends(get_db),
-    current_user=Depends(require_viewer),
+@router.get("/monthly-sales", response_model=list[MonthlySalesResponse])
+async def monthly_sales(
+    db: AsyncSession = Depends(get_db), current_user=Depends(require_viewer)
 ):
-    return AnalyticsService(db).monthly_sales()
+    return await AnalyticsService(db).monthly_sales()
 
 
-@router.get(
-    "/chart/sales-by-region",
-    response_model=ChartDatasetResponse,
-)
-def sales_by_region_chart(
-    db: Session = Depends(get_db),
-    current_user=Depends(require_viewer),
+@router.get("/chart/sales-by-region", response_model=ChartDatasetResponse)
+async def sales_by_region_chart(
+    db: AsyncSession = Depends(get_db), current_user=Depends(require_viewer)
 ):
-    return ChartService(db).sales_by_region_chart()
+    return await ChartService(db).sales_by_region_chart()
 
 
-@router.get(
-    "/chart/top-products",
-    response_model=ChartDatasetResponse,
-)
-def top_products_chart(
-    db: Session = Depends(get_db),
-    current_user=Depends(require_viewer),
+@router.get("/chart/top-products", response_model=ChartDatasetResponse)
+async def top_products_chart(
+    db: AsyncSession = Depends(get_db), current_user=Depends(require_viewer)
 ):
-    return ChartService(db).top_products_chart()
+    return await ChartService(db).top_products_chart()
 
 
-@router.get(
-    "/chart/monthly-sales",
-    response_model=ChartDatasetResponse,
-)
-def monthly_sales_chart(
-    db: Session = Depends(get_db),
-    current_user=Depends(require_viewer),
+@router.get("/chart/monthly-sales", response_model=ChartDatasetResponse)
+async def monthly_sales_chart(
+    db: AsyncSession = Depends(get_db), current_user=Depends(require_viewer)
 ):
-    return ChartService(db).monthly_sales_chart()
+    return await ChartService(db).monthly_sales_chart()
 
 
-@router.get(
-    "/chart/executive-summary",
-    response_model=ExecutiveSummaryResponse,
-)
-def executive_summary(
-    db: Session = Depends(get_db),
-    current_user=Depends(require_viewer),
+@router.get("/chart/executive-summary", response_model=ExecutiveSummaryResponse)
+async def executive_summary(
+    db: AsyncSession = Depends(get_db), current_user=Depends(require_viewer)
 ):
-    return ChartService(db).executive_summary()
+    return await ChartService(db).executive_summary()
 
 
-# ==========================================================
-# Forecast (Admin only)
-# ==========================================================
-
-@router.get(
-    "/forecast/revenue",
-    response_model=RevenueForecastResponse,
-)
-def revenue_forecast(
-    db: Session = Depends(get_db),
-    current_user=Depends(require_admin),
+@router.get("/forecast/revenue", response_model=RevenueForecastResponse)
+async def revenue_forecast(
+    db: AsyncSession = Depends(get_db), current_user=Depends(require_admin)
 ):
-    return ForecastService(db).revenue_forecast()
+    return await ForecastService(db).revenue_forecast()
 
 
-@router.get(
-    "/forecast/growth",
-    response_model=GrowthForecastResponse,
-)
-def growth_forecast(
-    db: Session = Depends(get_db),
-    current_user=Depends(require_admin),
+@router.get("/forecast/growth", response_model=GrowthForecastResponse)
+async def growth_forecast(
+    db: AsyncSession = Depends(get_db), current_user=Depends(require_admin)
 ):
-    return ForecastService(db).growth_forecast()
+    return await ForecastService(db).growth_forecast()
 
 
-@router.get(
-    "/forecast/executive-forecast",
-    response_model=ExecutiveForecastResponse,
-)
-def executive_forecast(
-    db: Session = Depends(get_db),
-    current_user=Depends(require_admin),
+@router.get("/forecast/executive-forecast", response_model=ExecutiveForecastResponse)
+async def executive_forecast(
+    db: AsyncSession = Depends(get_db), current_user=Depends(require_admin)
 ):
-    return ForecastService(db).executive_forecast()
+    return await ForecastService(db).executive_forecast()

@@ -30,13 +30,13 @@ class RetrieverAgent(
             ContextBuilder()
         )
 
-    def run(
+    async def run(
         self,
         context: ExecutionContext,
     ) -> ExecutionContext:
 
         context.retrieved_context = (
-            self.builder.build(
+            await self.builder.build(
                 context.question
             )
         )

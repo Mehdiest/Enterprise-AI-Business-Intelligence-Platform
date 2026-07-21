@@ -1,126 +1,44 @@
-"""
-KPI calculation service.
+"""Async KPI calculations."""
 
-Provides warehouse-level business metrics
-used by dashboards and BI consumers.
-"""
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from __future__ import annotations
-
-from sqlalchemy import func
-from sqlalchemy.orm import Session
-
-from app.models.warehouse import (
-    DimProduct,
-    DimRegion,
-    FactSales,
-)
+from app.models.warehouse import DimProduct, DimRegion, FactSales
 
 
 class KPIService:
-    """
-    Business KPI calculations.
-    """
-
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
-    def get_kpis(self) -> dict:
-        """
-        Calculate top-level KPIs.
-        """
-
+    async def get_kpis(self) -> dict:
         total_sales = (
-            self.db.query(
-                func.coalesce(
-                    func.sum(FactSales.amount),
-                    0,
-                )
-            )
-            .scalar()
-        )
-
+            await self.db.execute(select(func.coalesce(func.sum(FactSales.amount), 0)))
+        ).scalar_one()
         total_orders = (
-            self.db.query(
-                FactSales.id
-            )
-            .count()
+            await self.db.execute(select(func.count(FactSales.id)))
+        ).scalar_one()
+        top_region = await self._top_name(
+            DimRegion.region_name, FactSales.region_id, DimRegion.id
         )
-
-        average_order_value = (
-            float(total_sales) / total_orders
-            if total_orders
-            else 0
+        top_product = await self._top_name(
+            DimProduct.product_name, FactSales.product_id, DimProduct.id
         )
-
-        top_region = self._get_top_region()
-
-        top_product = self._get_top_product()
-
         return {
-            "total_sales": round(
-                float(total_sales),
-                2,
-            ),
+            "total_sales": round(float(total_sales), 2),
             "total_orders": total_orders,
-            "average_order_value": round(
-                average_order_value,
-                2,
-            ),
+            "average_order_value": round(float(total_sales) / total_orders, 2)
+            if total_orders
+            else 0,
             "top_region": top_region,
             "top_product": top_product,
         }
 
-    def _get_top_region(self) -> str:
-
-        result = (
-            self.db.query(
-                DimRegion.region_name,
-                func.sum(
-                    FactSales.amount
-                ).label("sales"),
-            )
-            .join(
-                FactSales,
-                FactSales.region_id
-                == DimRegion.id,
-            )
-            .group_by(
-                DimRegion.region_name
-            )
-            .order_by(
-                func.sum(
-                    FactSales.amount
-                ).desc()
-            )
-            .first()
+    async def _top_name(self, name_column, fact_fk, dimension_id) -> str:
+        statement = (
+            select(name_column)
+            .join(FactSales, fact_fk == dimension_id)
+            .group_by(name_column)
+            .order_by(func.sum(FactSales.amount).desc())
+            .limit(1)
         )
-
-        return result[0] if result else "N/A"
-
-    def _get_top_product(self) -> str:
-
-        result = (
-            self.db.query(
-                DimProduct.product_name,
-                func.sum(
-                    FactSales.amount
-                ).label("sales"),
-            )
-            .join(
-                FactSales,
-                FactSales.product_id
-                == DimProduct.id,
-            )
-            .group_by(
-                DimProduct.product_name
-            )
-            .order_by(
-                func.sum(
-                    FactSales.amount
-                ).desc()
-            )
-            .first()
-        )
-
-        return result[0] if result else "N/A"
+        return (await self.db.execute(statement)).scalar_one_or_none() or "N/A"

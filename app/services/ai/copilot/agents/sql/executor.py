@@ -1,72 +1,41 @@
-"""
-Enterprise SQL Executor.
-"""
+"""SQL executor backed by the application's async session factory."""
 
 from __future__ import annotations
 
+import logging
 import time
 
 from sqlalchemy import text
-from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 
-from .models import (
-    SQLExecutionResult,
-)
+from .models import SQLExecutionResult
+
+logger = logging.getLogger(__name__)
 
 
 class SQLExecutor:
-    """
-    Executes SQL safely.
-    """
+    """Execute validated read-only SQL."""
 
-    def execute(
-        self,
-        sql: str,
-    ) -> SQLExecutionResult:
-
+    async def execute(self, sql: str) -> SQLExecutionResult:
+        """Run `sql` and return its rows with the elapsed execution time."""
         start = time.perf_counter()
 
-        session: Session = SessionLocal()
-
         try:
+            async with SessionLocal() as session:
+                result = await session.execute(text(sql))
+                rows = [dict(row._mapping) for row in result]
 
-            result = session.execute(
-                text(sql)
-            )
+        except Exception:
+            logger.exception("SQL execution failed | sql=%s", sql)
+            raise
 
-            rows = [
-
-                dict(row._mapping)
-
-                for row in result
-
-            ]
-
-            elapsed = (
-
-                time.perf_counter()
-
-                - start
-
-            ) * 1000
-
-            return SQLExecutionResult(
-
-                sql=sql,
-
-                rows=rows,
-
-                row_count=len(rows),
-
-                execution_time_ms=round(
-                    elapsed,
-                    2,
-                ),
-
-            )
-
-        finally:
-
-            session.close()
+        return SQLExecutionResult(
+            sql=sql,
+            rows=rows,
+            row_count=len(rows),
+            execution_time_ms=round(
+                (time.perf_counter() - start) * 1000,
+                2,
+            ),
+        )

@@ -1,30 +1,16 @@
-"""
-Base execution engine.
-"""
+"""Base execution engine."""
 
 from __future__ import annotations
 
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
-from app.services.ai.copilot.context_runtime import (
-    ExecutionContext,
-)
+from app.services.ai.copilot.context_runtime import ExecutionContext
 
 
-class BaseExecutor(
-    ABC,
-):
-    """
-    Abstract execution engine.
-    """
+class BaseExecutor(ABC):
+    """Abstract execution engine."""
 
     @abstractmethod
-    def execute(
-        self,
-        context: ExecutionContext,
-    ) -> ExecutionContext:
-        """
-        Execute an execution context.
-        """
+    async def execute(self, context: ExecutionContext) -> ExecutionContext:
+        """Execute an execution context."""
         ...

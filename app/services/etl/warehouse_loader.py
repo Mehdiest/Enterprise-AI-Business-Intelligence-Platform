@@ -1,16 +1,14 @@
-"""
-Warehouse loading service.
-
-Responsibilities:
-- Load transformed data into warehouse dimensions
-- Populate fact table
-- Prevent duplicate dimensions
-- Manage transactional inserts
-"""
+"""Asynchronous warehouse batch loader."""
 
 from __future__ import annotations
 
-from sqlalchemy.orm import Session
+import logging
+from collections.abc import Iterable
+from datetime import date
+from typing import Any
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.warehouse import (
     DimChannel,
@@ -21,194 +19,137 @@ from app.models.warehouse import (
     FactSales,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class WarehouseLoader:
-    """
-    Loads transformed data into the warehouse.
-    """
+    """Load warehouse dimensions and facts in batches."""
 
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    def load_dataframe(self, dataframe):
-        """
-        Load transformed dataframe into warehouse.
-        """
+    async def load_dataframe(self, dataframe: Any) -> int:
+        """Load transformed rows into warehouse tables."""
+        if dataframe.empty:
+            return 0
 
-        loaded_rows = 0
+        rows = dataframe.to_dict(orient="records")
+        try:
+            dimension_ids = await self._load_dimensions(rows)
+            fact_mappings = self._fact_mappings(rows, dimension_ids)
+            await self._insert_mappings(FactSales, fact_mappings)
+            await self.db.commit()
+            return len(fact_mappings)
+        except Exception:
+            await self.db.rollback()
+            logger.exception("Warehouse batch load failed | rows=%s", len(rows))
+            raise
 
-        for _, row in dataframe.iterrows():
+    async def _load_dimensions(self, rows: list[dict]) -> dict[str, dict]:
+        return {
+            "customers": await self._dimension_map(
+                DimCustomer, "customer_code", self._customer_mappings(rows)
+            ),
+            "products": await self._dimension_map(
+                DimProduct, "product_code", self._product_mappings(rows)
+            ),
+            "regions": await self._dimension_map(
+                DimRegion, "region_name", self._region_mappings(rows)
+            ),
+            "channels": await self._dimension_map(
+                DimChannel, "channel_name", self._channel_mappings(rows)
+            ),
+            "dates": await self._dimension_map(
+                DimDate, "full_date", self._date_mappings(rows)
+            ),
+        }
 
-            customer = self._get_or_create_customer(
-                row["customer_code"],
-                row["customer_name"],
+    async def _dimension_map(
+        self, model: Any, key: str, mappings: Iterable[dict]
+    ) -> dict:
+        unique_mappings = {mapping[key]: mapping for mapping in mappings}
+        if not unique_mappings:
+            return {}
+
+        column = getattr(model, key)
+        values = list(unique_mappings)
+        database_ids = await self._existing_ids(model, column, key, values)
+        missing_mappings = [
+            mapping
+            for value, mapping in unique_mappings.items()
+            if value not in database_ids
+        ]
+        if missing_mappings:
+            await self._insert_mappings(model, missing_mappings)
+            database_ids.update(
+                await self._existing_ids(
+                    model, column, key, [mapping[key] for mapping in missing_mappings]
+                )
             )
+        return database_ids
 
-            product = self._get_or_create_product(
-                row["product_code"],
-                row["product_name"],
-            )
+    async def _existing_ids(
+        self, model: Any, column: Any, key: str, values: list
+    ) -> dict:
+        query_result = await self.db.execute(select(model).where(column.in_(values)))
+        records = query_result.scalars().all()
+        return {getattr(record, key): record.id for record in records}
 
-            region = self._get_or_create_region(
-                row["region"]
-            )
-
-            channel = self._get_or_create_channel(
-                row["channel"]
-            )
-
-            date_dimension = self._get_or_create_date(
-                row["sale_date"]
-            )
-
-            fact_record = FactSales(
-                customer_id=customer.id,
-                product_id=product.id,
-                region_id=region.id,
-                channel_id=channel.id,
-                date_id=date_dimension.id,
-                quantity=int(row["quantity"]),
-                amount=float(row["amount"]),
-            )
-
-            self.db.add(fact_record)
-
-            loaded_rows += 1
-
-        self.db.commit()
-
-        return loaded_rows
-
-    def _get_or_create_customer(
-        self,
-        customer_code: str,
-        customer_name: str,
-    ):
-
-        customer = (
-            self.db.query(DimCustomer)
-            .filter(
-                DimCustomer.customer_code
-                == customer_code
-            )
-            .first()
+    async def _insert_mappings(self, model: Any, mappings: list[dict]) -> None:
+        await self.db.run_sync(
+            lambda session: session.bulk_insert_mappings(model, mappings)
         )
 
-        if customer:
-            return customer
-
-        customer = DimCustomer(
-            customer_code=customer_code,
-            customer_name=customer_name,
+    @staticmethod
+    def _customer_mappings(rows: list[dict]) -> Iterable[dict]:
+        return (
+            {
+                "customer_code": str(row["customer_code"]),
+                "customer_name": str(row["customer_name"]),
+            }
+            for row in rows
         )
 
-        self.db.add(customer)
-        self.db.flush()
-
-        return customer
-
-    def _get_or_create_product(
-        self,
-        product_code: str,
-        product_name: str,
-    ):
-
-        product = (
-            self.db.query(DimProduct)
-            .filter(
-                DimProduct.product_code
-                == product_code
-            )
-            .first()
+    @staticmethod
+    def _product_mappings(rows: list[dict]) -> Iterable[dict]:
+        return (
+            {
+                "product_code": str(row["product_code"]),
+                "product_name": str(row["product_name"]),
+            }
+            for row in rows
         )
 
-        if product:
-            return product
+    @staticmethod
+    def _region_mappings(rows: list[dict]) -> Iterable[dict]:
+        return ({"region_name": str(row["region"])} for row in rows)
 
-        product = DimProduct(
-            product_code=product_code,
-            product_name=product_name,
-        )
+    @staticmethod
+    def _channel_mappings(rows: list[dict]) -> Iterable[dict]:
+        return ({"channel_name": str(row["channel"])} for row in rows)
 
-        self.db.add(product)
-        self.db.flush()
+    @classmethod
+    def _date_mappings(cls, rows: list[dict]) -> Iterable[dict]:
+        return ({"full_date": cls._as_date(row["sale_date"])} for row in rows)
 
-        return product
+    @classmethod
+    def _fact_mappings(
+        cls, rows: list[dict], dimension_ids: dict[str, dict]
+    ) -> list[dict]:
+        return [cls._fact_mapping(row, dimension_ids) for row in rows]
 
-    def _get_or_create_region(
-        self,
-        region_name: str,
-    ):
+    @classmethod
+    def _fact_mapping(cls, row: dict, dimension_ids: dict[str, dict]) -> dict:
+        return {
+            "customer_id": dimension_ids["customers"][str(row["customer_code"])],
+            "product_id": dimension_ids["products"][str(row["product_code"])],
+            "region_id": dimension_ids["regions"][str(row["region"])],
+            "channel_id": dimension_ids["channels"][str(row["channel"])],
+            "date_id": dimension_ids["dates"][cls._as_date(row["sale_date"])],
+            "quantity": int(row["quantity"]),
+            "amount": float(row["amount"]),
+        }
 
-        region = (
-            self.db.query(DimRegion)
-            .filter(
-                DimRegion.region_name
-                == region_name
-            )
-            .first()
-        )
-
-        if region:
-            return region
-
-        region = DimRegion(
-            region_name=region_name
-        )
-
-        self.db.add(region)
-        self.db.flush()
-
-        return region
-
-    def _get_or_create_channel(
-        self,
-        channel_name: str,
-    ):
-
-        channel = (
-            self.db.query(DimChannel)
-            .filter(
-                DimChannel.channel_name
-                == channel_name
-            )
-            .first()
-        )
-
-        if channel:
-            return channel
-
-        channel = DimChannel(
-            channel_name=channel_name
-        )
-
-        self.db.add(channel)
-        self.db.flush()
-
-        return channel
-
-    def _get_or_create_date(
-        self,
-        sale_date,
-    ):
-
-        existing = (
-            self.db.query(DimDate)
-            .filter(
-                DimDate.full_date
-                == sale_date.date()
-            )
-            .first()
-        )
-
-        if existing:
-            return existing
-
-        date_dimension = DimDate(
-            full_date=sale_date.date()
-        )
-
-        self.db.add(date_dimension)
-        self.db.flush()
-
-        return date_dimension
+    @staticmethod
+    def _as_date(value: Any) -> date:
+        return value.date() if hasattr(value, "date") else value

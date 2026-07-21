@@ -2,7 +2,7 @@ fastapi
 uvicorn[standard]
 
 sqlalchemy
-psycopg2-binary
+asyncpg
 alembic
 
 pydantic
@@ -21,6 +21,7 @@ xlsxwriter
 python-multipart
 
 httpx
+redis>=5.0.0
 
 jinja2
 

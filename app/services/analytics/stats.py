@@ -1,125 +1,48 @@
-"""
-Analytics aggregation service.
+"""Async dashboard aggregations."""
 
-Provides aggregated datasets for
-dashboards, charts, and BI tools.
-"""
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from __future__ import annotations
-
-from sqlalchemy import func
-from sqlalchemy.orm import Session
-
-from app.models.warehouse import (
-    DimDate,
-    DimProduct,
-    DimRegion,
-    FactSales,
-)
+from app.models.warehouse import DimDate, DimProduct, DimRegion, FactSales
 
 
 class AnalyticsService:
-    """
-    Dashboard analytics service.
-    """
-
-    def __init__(self, db: Session):
+    def __init__(self, db: AsyncSession):
         self.db = db
 
-    def sales_by_region(self) -> list[dict]:
-
-        results = (
-            self.db.query(
-                DimRegion.region_name,
-                func.sum(
-                    FactSales.amount
-                ).label("sales"),
-            )
-            .join(
-                FactSales,
-                FactSales.region_id == DimRegion.id,
-            )
-            .group_by(
-                DimRegion.region_name
-            )
-            .order_by(
-                func.sum(
-                    FactSales.amount
-                ).desc()
-            )
-            .all()
+    async def sales_by_region(self) -> list[dict]:
+        statement = (
+            select(DimRegion.region_name, func.sum(FactSales.amount).label("sales"))
+            .join(FactSales, FactSales.region_id == DimRegion.id)
+            .group_by(DimRegion.region_name)
+            .order_by(func.sum(FactSales.amount).desc())
         )
-
         return [
-            {
-                "region": region,
-                "sales": float(sales),
-            }
-            for region, sales in results
+            {"region": region, "sales": float(sales)}
+            for region, sales in (await self.db.execute(statement)).all()
         ]
 
-    def top_products(
-        self,
-        limit: int = 10,
-    ) -> list[dict]:
-
-        results = (
-            self.db.query(
-                DimProduct.product_name,
-                func.sum(
-                    FactSales.amount
-                ).label("sales"),
-            )
-            .join(
-                FactSales,
-                FactSales.product_id == DimProduct.id,
-            )
-            .group_by(
-                DimProduct.product_name
-            )
-            .order_by(
-                func.sum(
-                    FactSales.amount
-                ).desc()
-            )
+    async def top_products(self, limit: int = 10) -> list[dict]:
+        statement = (
+            select(DimProduct.product_name, func.sum(FactSales.amount).label("sales"))
+            .join(FactSales, FactSales.product_id == DimProduct.id)
+            .group_by(DimProduct.product_name)
+            .order_by(func.sum(FactSales.amount).desc())
             .limit(limit)
-            .all()
         )
-
         return [
-            {
-                "product": product,
-                "sales": float(sales),
-            }
-            for product, sales in results
+            {"product": product, "sales": float(sales)}
+            for product, sales in (await self.db.execute(statement)).all()
         ]
 
-    def monthly_sales(self) -> list[dict]:
-
-        results = (
-            self.db.query(
-                DimDate.full_date,
-                func.sum(
-                    FactSales.amount
-                ).label("sales"),
-            )
-            .join(
-                FactSales,
-                FactSales.date_id == DimDate.id,
-            )
-            .group_by(
-                DimDate.full_date
-            )
-            .order_by(
-                DimDate.full_date
-            )
-            .all()
+    async def monthly_sales(self) -> list[dict]:
+        statement = (
+            select(DimDate.full_date, func.sum(FactSales.amount).label("sales"))
+            .join(FactSales, FactSales.date_id == DimDate.id)
+            .group_by(DimDate.full_date)
+            .order_by(DimDate.full_date)
         )
-
         return [
-            {
-                "month": str(date),
-                "sales": float(sales),
-            }
-            for date, sales in results
+            {"month": str(day), "sales": float(sales)}
+            for day, sales in (await self.db.execute(statement)).all()
         ]

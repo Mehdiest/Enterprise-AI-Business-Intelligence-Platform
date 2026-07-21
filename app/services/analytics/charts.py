@@ -1,84 +1,44 @@
-"""
-Chart dataset builders.
+from datetime import UTC, datetime
 
-Transforms analytics data into
-frontend and Power BI friendly formats.
-"""
-
-from datetime import datetime
-
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.analytics.kpi import KPIService
 from app.services.analytics.stats import AnalyticsService
 
 
 class ChartService:
-    """
-    Build chart-ready datasets.
-    """
+    def __init__(self, db: AsyncSession):
+        self.analytics, self.kpis = AnalyticsService(db), KPIService(db)
 
-    def __init__(self, db: Session):
-        self.db = db
-        self.analytics = AnalyticsService(db)
-        self.kpis = KPIService(db)
-
-    def sales_by_region_chart(self) -> dict:
-
-        data = self.analytics.sales_by_region()
-
+    async def sales_by_region_chart(self):
+        data = await self.analytics.sales_by_region()
         return {
             "chart_type": "bar",
             "title": "Sales by Region",
-            "labels": [
-                item["region"]
-                for item in data
-            ],
-            "values": [
-                item["sales"]
-                for item in data
-            ],
+            "labels": [x["region"] for x in data],
+            "values": [x["sales"] for x in data],
         }
 
-    def top_products_chart(self) -> dict:
-
-        data = self.analytics.top_products()
-
+    async def top_products_chart(self):
+        data = await self.analytics.top_products()
         return {
             "chart_type": "bar",
             "title": "Top Products",
-            "labels": [
-                item["product"]
-                for item in data
-            ],
-            "values": [
-                item["sales"]
-                for item in data
-            ],
+            "labels": [x["product"] for x in data],
+            "values": [x["sales"] for x in data],
         }
 
-    def monthly_sales_chart(self) -> dict:
-
-        data = self.analytics.monthly_sales()
-
+    async def monthly_sales_chart(self):
+        data = await self.analytics.monthly_sales()
         return {
             "chart_type": "line",
             "title": "Monthly Sales",
-            "labels": [
-                item["month"]
-                for item in data
-            ],
-            "values": [
-                item["sales"]
-                for item in data
-            ],
+            "labels": [x["month"] for x in data],
+            "values": [x["sales"] for x in data],
         }
 
-    def executive_summary(self) -> dict:
-
-        kpis = self.kpis.get_kpis()
-
+    async def executive_summary(self):
         return {
-            **kpis,
-            "generated_at": datetime.utcnow().isoformat(),
+            **(await self.kpis.get_kpis()),
+            "generated_at": datetime.now(UTC).isoformat(),
         }

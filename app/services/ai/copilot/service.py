@@ -1,13 +1,10 @@
 """
-Enterprise Copilot Service.
+Enterprise AI Copilot.
 """
 
 from __future__ import annotations
 
-from app.services.ai.copilot.engine import (
-    CopilotEngine,
-)
-
+from app.services.ai.copilot.engine import CopilotEngine
 from app.services.ai.copilot.models import (
     CopilotRequest,
     CopilotResponse,
@@ -19,15 +16,15 @@ class CopilotService:
     Enterprise AI Copilot.
     """
 
-    def __init__(self):
-
+    def __init__(self) -> None:
         self.engine = CopilotEngine()
 
-    def ask(
+    async def ask(
         self,
         request: CopilotRequest,
     ) -> CopilotResponse:
+        """
+        Execute the Copilot request.
+        """
 
-        return self.engine.process(
-            request
-        )
+        return await self.engine.process(request)

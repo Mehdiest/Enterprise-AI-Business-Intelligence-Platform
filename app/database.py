@@ -1,11 +1,11 @@
-from sqlalchemy import create_engine
+from collections.abc import AsyncGenerator
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.orm import sessionmaker
 
 from app.config import settings
 
-
-engine = create_engine(
+engine = create_async_engine(
     settings.database_url,
     pool_pre_ping=True,
     pool_size=20,
@@ -13,20 +13,17 @@ engine = create_engine(
     pool_recycle=3600,
 )
 
-SessionLocal = sessionmaker(
+SessionLocal = async_sessionmaker(
     autocommit=False,
     autoflush=False,
+    expire_on_commit=False,
     bind=engine,
 )
 
 Base = declarative_base()
 
 
-def get_db():
-    db = SessionLocal()
-
-    try:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    """Provide one non-blocking SQLAlchemy session per request."""
+    async with SessionLocal() as db:
         yield db
-
-    finally:
-        db.close()
