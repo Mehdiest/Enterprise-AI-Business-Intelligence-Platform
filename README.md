@@ -319,9 +319,11 @@ Enterprise-AI-Business-Intelligence-Platform/
 │   ├── monitoring/
 │   │   ├── health.py
 │   │   └── metrics.py
+│   ├── utils/
+│   │   └── logger.py
 │   └── dependencies/
 │       ├── auth.py
-│       └── rate_limit.py
+│       ├── rate_limit.py
 │       └── rbac.py
 ├── alembic/
 │   └── versions/
