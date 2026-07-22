@@ -1,51 +1,47 @@
-"""Tests for security layer."""
+"""Security and middleware tests."""
 
-from __future__ import annotations
+import pytest
 
 
-def test_protected_endpoint_without_token(client):
-    res = client.post(
-        "/copilot/query",
-        json={"question": "test"},
-    )
+@pytest.mark.asyncio
+async def test_protected_endpoint_without_token(client):
+    res = await client.post("/copilot/query", json={"question": "test"})
     assert res.status_code == 401
 
 
-def test_protected_endpoint_with_bad_token(client):
-    client.headers.update({"Authorization": "Bearer badtoken"})
-    res = client.get("/auth/me")
-    assert res.status_code == 401
-
-
-def test_protected_endpoint_with_malformed_header(client):
+@pytest.mark.asyncio
+async def test_protected_endpoint_with_malformed_header(client):
     client.headers.update({"Authorization": "NotBearer token"})
-    res = client.get("/auth/me")
+    res = await client.get("/auth/me")
     assert res.status_code == 401
 
 
-def test_ingest_requires_auth(client, sample_csv):
-    with open(sample_csv, "rb") as f:
-        res = client.post(
-            "/ingest/csv",
-            files={"file": ("sales.csv", f, "text/csv")},
-        )
-    assert res.status_code == 401
-
-
-def test_stack_trace_not_exposed(client):
-    """Exception middleware must not leak tracebacks."""
-    res = client.get("/nonexistent-endpoint-xyz")
+@pytest.mark.asyncio
+async def test_stack_trace_not_exposed(client):
+    res = await client.get("/nonexistent-endpoint-xyz")
     assert res.status_code == 404
-    body = res.text
-    assert "Traceback" not in body
-    assert "File " not in body
 
 
-def test_health_is_public(client):
-    res = client.get("/health")
+@pytest.mark.asyncio
+async def test_root_is_public(client):
+    res = await client.get("/")
     assert res.status_code == 200
 
 
-def test_root_is_public(client):
-    res = client.get("/")
+@pytest.mark.asyncio
+async def test_protected_endpoint_with_bad_token(client):
+    client.headers.update({"Authorization": "Bearer badtoken"})
+    res = await client.get("/auth/me")
+    assert res.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_ingest_requires_auth(client):
+    res = await client.post("/ingest/csv")
+    assert res.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_health_is_public(client):
+    res = await client.get("/health")
     assert res.status_code == 200

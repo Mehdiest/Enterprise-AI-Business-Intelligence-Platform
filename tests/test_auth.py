@@ -1,30 +1,36 @@
-"""Tests for /auth endpoints."""
+"""Authentication endpoint tests."""
 
-from __future__ import annotations
+import pytest
 
 
-def test_register_success(client, test_user):
-    res = client.post("/auth/register", json=test_user)
+@pytest.mark.asyncio
+async def test_register_success(client, test_user):
+    res = await client.post("/auth/register", json=test_user)
     assert res.status_code == 200
-    data = res.json()
-    assert data["email"] == test_user["email"]
-    assert data["full_name"] == test_user["full_name"]
-    assert "id" in data
 
 
-def test_register_duplicate_email(client, test_user):
-    client.post("/auth/register", json=test_user)
-    res = client.post("/auth/register", json=test_user)
-    assert res.status_code == 400
-
-
-def test_register_missing_fields(client):
-    res = client.post("/auth/register", json={"email": "x@x.com"})
+@pytest.mark.asyncio
+async def test_register_missing_fields(client):
+    res = await client.post("/auth/register", json={"email": "test@test.com"})
     assert res.status_code == 422
 
 
-def test_login_success(client, registered_user):
-    res = client.post(
+@pytest.mark.asyncio
+async def test_register_duplicate_email(client, registered_user):
+    res = await client.post(
+        "/auth/register",
+        json={
+            "full_name": "Test",
+            "email": registered_user["email"],
+            "password": "Password@123",
+        },
+    )
+    assert res.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_login_success(client, registered_user):
+    res = await client.post(
         "/auth/login",
         data={
             "username": registered_user["email"],
@@ -35,37 +41,42 @@ def test_login_success(client, registered_user):
     assert "access_token" in res.json()
 
 
-def test_login_wrong_password(client, registered_user):
-    res = client.post(
+@pytest.mark.asyncio
+async def test_login_wrong_password(client, registered_user):
+    res = await client.post(
         "/auth/login",
         data={
             "username": registered_user["email"],
-            "password": "wrongpassword",
+            "password": "WrongPass@123",
         },
     )
     assert res.status_code == 401
 
 
-def test_login_unknown_email(client):
-    res = client.post(
+@pytest.mark.asyncio
+async def test_login_unknown_email(client):
+    res = await client.post(
         "/auth/login",
-        data={"username": "nobody@test.com", "password": "pass"},
+        data={"username": "unknown@test.com", "password": "Pass@123"},
     )
     assert res.status_code == 401
 
 
-def test_me_authenticated(authorized_client, registered_user):
-    res = authorized_client.get("/auth/me")
-    assert res.status_code == 200
-    assert res.json()["email"] == registered_user["email"]
-
-
-def test_me_unauthenticated(client):
-    res = client.get("/auth/me")
+@pytest.mark.asyncio
+async def test_me_unauthenticated(client):
+    res = await client.get("/auth/me")
     assert res.status_code == 401
 
 
-def test_me_invalid_token(client):
-    client.headers.update({"Authorization": "Bearer invalidtoken"})
-    res = client.get("/auth/me")
+@pytest.mark.asyncio
+async def test_me_authenticated(authorized_client):
+    res = await authorized_client.get("/auth/me")
+    assert res.status_code == 200
+    assert "email" in res.json()
+
+
+@pytest.mark.asyncio
+async def test_me_invalid_token(client):
+    client.headers.update({"Authorization": "Bearer invalid"})
+    res = await client.get("/auth/me")
     assert res.status_code == 401

@@ -1,6 +1,4 @@
-"""
-Enterprise SQL Agent.
-"""
+"""Enterprise SQL Agent."""
 
 from __future__ import annotations
 
@@ -15,61 +13,22 @@ from .validator import SQLValidator
 
 
 class SQLAgent(BaseSQLAgent):
-    """
-    Enterprise SQL Agent.
-
-    Responsible for:
-    - SQL planning
-    - SQL generation
-    - SQL validation
-    - SQL execution
-    - Result formatting
-    """
-
     def __init__(self) -> None:
-
         self.planner = SQLPlanner()
-
         self.generator = SQLGenerator()
-
         self.validator = SQLValidator()
-
         self.executor = SQLExecutor()
-
         self.formatter = SQLFormatter()
 
-
-    async def run(
-        self,
-        context: ExecutionContext,
-    ) -> ExecutionContext:
-
-        plan = self.planner.build_plan(
-            context.question
-        )
+    async def run(self, context: ExecutionContext) -> ExecutionContext:
+        plan = self.planner.build_plan(context.question)
 
         if not plan.requires_sql:
             return context
 
-
-        generation = await self.generator.generate(
-            context.question,
-            plan,
-        )
-
-
-        self.validator.validate(
-            generation.sql
-        )
-
-
-        execution = await self.executor.execute(
-            generation.sql
-        )
-
-
-        context.sql_result = self.formatter.format(
-            execution
-        )
+        generation = await self.generator.generate(context.question, plan)
+        self.validator.validate(generation.sql)
+        execution = await self.executor.execute(generation.sql)
+        context.sql_result = self.formatter.format(execution)
 
         return context

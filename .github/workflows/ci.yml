@@ -62,4 +62,4 @@ jobs:
       - name: Run tests
         run: |
           export PYTHONPATH=.
-          pytest tests --ignore=tests/manual -v --tb=short
+          python -m pytest tests --ignore=tests/manual -v --tb=short

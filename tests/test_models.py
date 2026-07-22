@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from app.models.user import User
 from app.models.warehouse import DimCustomer, DimProduct, DimRegion, FactSales
 
@@ -15,15 +17,17 @@ def test_user_model_fields():
     assert hasattr(User, "is_active")
 
 
-def test_user_default_role(db):
+@pytest.mark.asyncio
+async def test_user_default_role(db):
     user = User(
         full_name="Test",
         email="test@model.com",
         hashed_password="hashed",
     )
     db.add(user)
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
+    
     assert user.role == "viewer"
     assert user.is_active is True
 

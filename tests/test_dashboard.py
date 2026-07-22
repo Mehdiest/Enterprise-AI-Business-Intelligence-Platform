@@ -2,20 +2,18 @@
 
 from __future__ import annotations
 
-
-# ==========================================================
-# Viewer endpoints
-# ==========================================================
+import pytest
 
 
-def test_kpis_returns_200(authorized_client):
-    res = authorized_client.get("/dashboard/kpis")
+@pytest.mark.asyncio
+async def test_kpis_returns_200(authorized_client):
+    res = await authorized_client.get("/dashboard/kpis")
     assert res.status_code == 200
 
 
-def test_kpis_schema(authorized_client):
-    res = authorized_client.get("/dashboard/kpis")
-
+@pytest.mark.asyncio
+async def test_kpis_schema(authorized_client):
+    res = await authorized_client.get("/dashboard/kpis")
     data = res.json()
 
     assert "total_sales" in data
@@ -25,80 +23,70 @@ def test_kpis_schema(authorized_client):
     assert "top_product" in data
 
 
-def test_sales_by_region(authorized_client):
-    res = authorized_client.get("/dashboard/sales-by-region")
-
+@pytest.mark.asyncio
+async def test_sales_by_region(authorized_client):
+    res = await authorized_client.get("/dashboard/sales-by-region")
     assert res.status_code == 200
     assert isinstance(res.json(), list)
 
 
-def test_top_products(authorized_client):
-    res = authorized_client.get("/dashboard/top-products")
-
+@pytest.mark.asyncio
+async def test_top_products(authorized_client):
+    res = await authorized_client.get("/dashboard/top-products")
     assert res.status_code == 200
     assert isinstance(res.json(), list)
 
 
-def test_monthly_sales(authorized_client):
-    res = authorized_client.get("/dashboard/monthly-sales")
-
+@pytest.mark.asyncio
+async def test_monthly_sales(authorized_client):
+    res = await authorized_client.get("/dashboard/monthly-sales")
     assert res.status_code == 200
     assert isinstance(res.json(), list)
 
 
-def test_chart_sales_by_region(authorized_client):
-    res = authorized_client.get("/dashboard/chart/sales-by-region")
-
+@pytest.mark.asyncio
+async def test_chart_sales_by_region(authorized_client):
+    res = await authorized_client.get("/dashboard/chart/sales-by-region")
     assert res.status_code == 200
 
 
-def test_chart_top_products(authorized_client):
-    res = authorized_client.get("/dashboard/chart/top-products")
-
+@pytest.mark.asyncio
+async def test_chart_top_products(authorized_client):
+    res = await authorized_client.get("/dashboard/chart/top-products")
     assert res.status_code == 200
 
 
-def test_chart_monthly_sales(authorized_client):
-    res = authorized_client.get("/dashboard/chart/monthly-sales")
-
+@pytest.mark.asyncio
+async def test_chart_monthly_sales(authorized_client):
+    res = await authorized_client.get("/dashboard/chart/monthly-sales")
     assert res.status_code == 200
 
 
-def test_executive_summary(authorized_client):
-    res = authorized_client.get("/dashboard/chart/executive-summary")
-
+@pytest.mark.asyncio
+async def test_executive_summary(authorized_client):
+    res = await authorized_client.get("/dashboard/chart/executive-summary")
     assert res.status_code == 200
 
 
-# ==========================================================
-# RBAC
-# ==========================================================
-
-
-def test_forecast_requires_admin(authorized_client):
-    res = authorized_client.get("/dashboard/forecast/revenue")
-
+@pytest.mark.asyncio
+async def test_forecast_requires_admin(authorized_client):
+    res = await authorized_client.get("/dashboard/forecast/revenue")
     assert res.status_code == 403
 
 
-# ==========================================================
-# Admin endpoints
-# ==========================================================
-
-
-def test_forecast_revenue(admin_client):
-    res = admin_client.get("/dashboard/forecast/revenue")
-
+@pytest.mark.asyncio
+async def test_forecast_revenue(admin_client):
+    res = await admin_client.get("/dashboard/forecast/revenue")
     assert res.status_code == 200
 
 
-def test_forecast_growth(admin_client):
-    res = admin_client.get("/dashboard/forecast/growth")
-
+@pytest.mark.asyncio
+async def test_forecast_growth(admin_client):
+    res = await admin_client.get("/dashboard/forecast/growth")
     assert res.status_code == 200
 
 
-def test_forecast_executive(admin_client):
-    res = admin_client.get("/dashboard/forecast/executive-forecast")
-
+@pytest.mark.asyncio
+async def test_forecast_executive(admin_client):
+    res = await admin_client.get("/dashboard/forecast/executive-forecast")
     assert res.status_code == 200
