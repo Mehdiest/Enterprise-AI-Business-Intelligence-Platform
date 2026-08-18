@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -112,20 +111,3 @@ async def me(
         role=current_user.role,
         is_active=current_user.is_active,
     )
-
-
-@router.get("/fix-admin-role")
-async def fix_admin_role(db: AsyncSession = Depends(get_db)):
-    result_admin = await db.execute(select(User).where(User.email == "admin@enterprise-bi.com"))
-    admin_user = result_admin.scalars().first()
-
-    result_demo = await db.execute(select(User).where(User.email == "demo@enterprise-bi.com"))
-    demo_user = result_demo.scalars().first()
-
-    if admin_user:
-        admin_user.role = "admin"
-    if demo_user:
-        demo_user.role = "viewer"
-
-    await db.commit()
-    return {"status": "success", "message": "Roles updated successfully"}
