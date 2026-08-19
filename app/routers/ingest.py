@@ -55,10 +55,16 @@ def _validate_csv(file: UploadFile) -> None:
 
 
 async def _save_upload(file: UploadFile) -> Path:
+    """Stream the upload to a temporary file, removing it if the write fails."""
     max_bytes = settings.max_upload_mb * 1024 * 1024
     with NamedTemporaryFile(delete=False, suffix=".csv") as temp_file:
-        await _write_chunks(file, temp_file, max_bytes)
-        return Path(temp_file.name)
+        temp_path = Path(temp_file.name)
+        try:
+            await _write_chunks(file, temp_file, max_bytes)
+        except BaseException:
+            _delete_temp_file(temp_path)
+            raise
+    return temp_path
 
 
 async def _write_chunks(file: UploadFile, temp_file, max_bytes: int) -> None:

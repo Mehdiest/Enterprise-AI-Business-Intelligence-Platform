@@ -1,8 +1,8 @@
-"""
-Authentication service.
-"""
+"""Authenticate users and issue rotating JWT token pairs."""
 
 from datetime import UTC, datetime, timedelta
+from hashlib import sha256
+from uuid import uuid4
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -20,9 +20,7 @@ pwd_context = CryptContext(
 
 
 class AuthService:
-    """
-    Authentication service.
-    """
+    """Authenticate users and manage their active refresh token."""
 
     def __init__(
         self,
@@ -58,18 +56,24 @@ class AuthService:
 
     async def login(self, email: str, password: str) -> dict | None:
         user = await self._find_user_by_email(email)
-        if user is None or not self._password_matches(password, user):
+        if user is None or not user.is_active:
             return None
-        return self._token_pair(user)
+        if not self._password_matches(password, user):
+            return None
+        return await self._token_pair(user)
 
     async def refresh_access_token(self, refresh_token: str) -> dict | None:
-        user_id = self._refresh_subject(refresh_token)
-        if user_id is None:
+        payload = self._decode_refresh_token(refresh_token)
+        if payload is None:
             return None
-        user = await self._find_user_by_id(user_id)
-        if user is None:
+        user = await self._find_user_by_id(payload["sub"])
+        if user is None or not user.is_active:
             return None
-        return self._token_pair(user, refresh_token)
+        if user.refresh_token_jti != payload["jti"]:
+            return None
+        if user.refresh_token_hash != self._token_hash(refresh_token):
+            return None
+        return await self._token_pair(user)
 
     async def _find_user_by_email(self, email: str) -> User | None:
         query_result = await self.db.execute(select(User).where(User.email == email))
@@ -83,23 +87,35 @@ class AuthService:
     def _password_matches(password: str, user: User) -> bool:
         return pwd_context.verify(password, user.hashed_password)
 
-    def _token_pair(self, user: User, refresh_token: str | None = None) -> dict:
-        token_subject = {"sub": str(user.id)}
+    async def _token_pair(self, user: User) -> dict:
+        subject = {"sub": str(user.id)}
+        jti = str(uuid4())
+        refresh_token = self.create_refresh_token(subject, jti)
+        user.refresh_token_jti = jti
+        user.refresh_token_hash = self._token_hash(refresh_token)
+        await self.db.commit()
         return {
-            "access_token": self.create_access_token(token_subject),
-            "refresh_token": refresh_token or self.create_refresh_token(token_subject),
+            "access_token": self.create_access_token(subject),
+            "refresh_token": refresh_token,
             "token_type": "bearer",
         }
 
     @staticmethod
-    def _refresh_subject(refresh_token: str) -> str | None:
+    def _decode_refresh_token(refresh_token: str) -> dict | None:
         try:
             payload = jwt.decode(
                 refresh_token, settings.secret_key, algorithms=[settings.algorithm]
             )
         except JWTError:
             return None
-        return payload.get("sub") if payload.get("type") == "refresh" else None
+        required_claims = (payload.get("sub"), payload.get("jti"))
+        if payload.get("type") != "refresh" or not all(required_claims):
+            return None
+        return payload
+
+    @staticmethod
+    def _token_hash(token: str) -> str:
+        return sha256(token.encode("utf-8")).hexdigest()
 
     @staticmethod
     def create_access_token(
@@ -124,6 +140,7 @@ class AuthService:
     @staticmethod
     def create_refresh_token(
         data: dict,
+        jti: str | None = None,
     ) -> str:
 
         payload = data.copy()
@@ -134,6 +151,7 @@ class AuthService:
 
         payload["exp"] = expire
         payload["type"] = "refresh"
+        payload["jti"] = jti or str(uuid4())
 
         return jwt.encode(
             payload,

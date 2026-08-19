@@ -1,8 +1,8 @@
 # Enterprise AI Business Intelligence Platform
 
-> A production-grade AI-powered Business Intelligence platform combining JWT-secured REST APIs, enterprise Role-Based Access Control (RBAC), a Multi-Agent AI Copilot, Star Schema data warehousing, ETL ingestion, and production-ready infrastructure — **v1.0.5 Full Async Migration & Stability Release**.
+> A production-grade AI-powered Business Intelligence platform combining JWT-secured REST APIs, enterprise Role-Based Access Control (RBAC), a Multi-Agent AI Copilot, Star Schema data warehousing, ETL ingestion, and production-ready infrastructure — **v1.0.6 Token Rotation & Async Health Hardening Release**.
 
-[![Version](https://img.shields.io/badge/version-1.0.5-blue)](https://github.com/Mehdiest/Enterprise-AI-Business-Intelligence-Platform)
+[![Version](https://img.shields.io/badge/version-1.0.6-blue)](https://github.com/Mehdiest/Enterprise-AI-Business-Intelligence-Platform)
 [![Python](https://img.shields.io/badge/python-3.12-blue?logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-latest-green?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
@@ -173,7 +173,9 @@ Enterprise Response  (answer + confidence + cited sources)
 
 ### Authentication
 - JWT Authentication (Access + Refresh Tokens)
-- Refresh Token rotation endpoint
+- Refresh Token rotation endpoint — each refresh issues a new token and invalidates the previous one (single active session per user)
+- Refresh tokens stored as SHA-256 hashes with a unique `jti`, so stolen or replayed tokens are rejected
+- Strict token-type separation — a refresh token can never be used as an access token
 - Enterprise Role-Based Access Control (RBAC)
 - Centralized authorization dependency layer
 - Protected API endpoints with Admin / Analyst / User permissions
@@ -212,7 +214,8 @@ Enterprise Response  (answer + confidence + cited sources)
 - CORS middleware with configurable origins
 - SQLAlchemy connection pooling
 - Four middleware layers: RequestID, Timing, Logging, Exception
-- Health checker with live database probe and metrics collection
+- Health checker with live async database probe and metrics collection
+- Kubernetes-style probes — `/live` (liveness) and `/ready` (readiness), returning `503` when the database is unreachable
 - Feature flags: SQL Agent, RAG, Analytics, Streaming, Cache, Debug
 - Environment separation: development / testing / staging / production
 - Structured logging via Loguru
@@ -327,8 +330,12 @@ Enterprise-AI-Business-Intelligence-Platform/
 │       └── rbac.py
 ├── alembic/
 │   └── versions/
-│       └── 001_initial_star_schema.py
+│       ├── 001_initial_star_schema.py
+│       └── 002_add_refresh_token_columns.py
 ├── tests/
+│   ├── test_auth.py
+│   ├── test_token_hardening.py
+│   ├── test_security.py
 │   └── manual/
 ├── requirements/
 │   ├── base.txt
@@ -479,11 +486,19 @@ POST /auth/login
 
 ```bash
 POST /auth/refresh
+Content-Type: application/json
+```
+```json
+{ "refresh_token": "eyJ..." }
+```
 
-{
-    "refresh_token":"..."
-}
+The response returns a **brand-new token pair**:
 
+```json
+{ "access_token": "eyJ...", "refresh_token": "eyJ...", "token_type": "bearer" }
+```
+
+> **Rotation is enforced.** Every successful refresh invalidates the token you just used. Always store the newly returned `refresh_token` — replaying an old one returns `HTTP 401`.
 
 **Protected Endpoints** — ETL ingestion and Copilot endpoints require authentication. Pass the token as a Bearer header:
 ```bash
@@ -558,14 +573,18 @@ curl -X POST http://localhost:8000/copilot/query \
 
 | Method | Endpoint | Description |
 |---|---|---|
-| GET | `/health` | Health check with DB probe and metrics |
+| GET | `/health` | Health check with DB probe and metrics — returns `503` when the database is down |
+| GET | `/live` | Liveness probe — always `200` while the process is running |
+| GET | `/ready` | Readiness probe — `503` until the database is reachable |
 | GET | `/` | Root liveness check |
 
 ---
 
 ## Security
 
-- Refresh Token authentication flow
+- Refresh Token rotation — every refresh invalidates the previous token, so a leaked token is single-use
+- Refresh tokens persisted as SHA-256 hashes plus a `jti`, never as raw tokens — a database dump cannot be replayed
+- Token-type enforcement — refresh tokens are rejected on access-protected endpoints and vice versa
 - Enterprise Role-Based Access Control (RBAC)
 - Centralized authorization dependency (RoleRequired)
 - Endpoint-level permission enforcement (Admin / Analyst / User)
@@ -595,6 +614,7 @@ curl -X POST http://localhost:8000/copilot/query \
 | **v1.0.3** | ✅ Released | Copilot data pipeline — SQL results flow into responses; CORS, rate limiting, upload limits, SECRET_KEY guard, duplicate module cleanup |
 | **v1.0.4** | ✅ Released | Enterprise RBAC, Refresh Token flow, SQL Validator, SQLAlchemy Connection Pooling, Production Authorization |
 | **v1.0.5** | ✅ Released | Full async migration — `asyncpg` engine, async-compatible auth/ingest/dashboard/insights routers, async batch warehouse loading, schema-aware LLM-backed SQL generation with safe fallback, SQLite-backed TTL conversation memory with non-blocking I/O |
+| **v1.0.6** | ✅ Released | Refresh token rotation & hashing, token-type enforcement, hardened SQL validator, async health/readiness probes, resilient CSV ingestion, regression test suite |
 | **v1.1.0** | 🔜 Planned | Live SQL Tool Calling, Real RAG Knowledge Base, Persistent Conversation Memory |
 | **v1.2.0** | 🔜 Planned | Streaming Responses, Multi-Provider Routing, Agent Orchestration |
 | **v2.0** | 🔭 Vision | Autonomous Decision Intelligence |
@@ -602,6 +622,17 @@ curl -X POST http://localhost:8000/copilot/query \
 ---
 
 ## Changelog
+
+### v1.0.6 — Token Rotation & Async Health Hardening Release
+
+- **Refresh Token Rotation** — `AuthService` now issues a brand-new token pair on every refresh and stores the active token as a SHA-256 hash alongside a unique `jti`. Replaying a previously used refresh token returns `HTTP 401`, which closes the token-reuse window and enforces a single active session per user.
+- **Token-Type Enforcement** — access and refresh tokens now carry an explicit `type` claim that is verified on every request, so a refresh token can no longer be presented as an access token.
+- **User Model & Migration** — added `refresh_token_jti` and `refresh_token_hash` columns, plus Alembic revision `002_add_refresh_token_columns` to upgrade existing deployments without data loss.
+- **SQL Validator** — rejects multi-statement payloads and now inspects *flattened* tokens, so write keywords hidden inside an otherwise valid `SELECT` (e.g. in a subquery or CTE) are caught instead of slipping through.
+- **Health & Probes** — the database probe is fully async and catches `SQLAlchemyError` instead of failing the request; `/health` returns `503` when degraded, and dedicated `/live` / `/ready` endpoints were added for Kubernetes-style orchestration.
+- **CSV Ingestion** — uploads stream to a temporary file with the size limit enforced mid-stream (`HTTP 413`), and the temp file is always removed in a `finally` block — even when the write itself fails.
+- **Tests** — added a regression suite (`tests/test_token_hardening.py`) covering rotation, replay rejection, token-type confusion, and validator bypass attempts.
+- **Version** — `app_version` bumped to `1.0.6`.
 
 ### v1.0.5 — Full Async Migration & Stability Release
 

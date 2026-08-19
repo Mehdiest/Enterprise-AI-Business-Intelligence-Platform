@@ -32,6 +32,8 @@ class Settings(BaseSettings):
 
     project_name: str = "Enterprise AI Business Intelligence Platform"
 
+    app_version: str = "1.0.6"
+
     api_v1_prefix: str = "/api/v1"
 
     app_env: str = "development"

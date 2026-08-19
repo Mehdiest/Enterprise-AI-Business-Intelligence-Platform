@@ -29,6 +29,10 @@ def _token_subject(token: str) -> str:
         payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
     except JWTError:
         raise _credentials_exception() from None
+
+    if payload.get("type") != "access":
+        raise _credentials_exception()
+
     user_id = payload.get("sub")
     if user_id is None:
         raise _credentials_exception()

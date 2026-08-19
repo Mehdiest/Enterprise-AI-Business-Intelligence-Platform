@@ -4,7 +4,10 @@ Application-wide constants.
 
 from __future__ import annotations
 
-APP_VERSION = "1.0.3"
+from app.config import settings
+
+# Derived from settings so the version is never duplicated or left stale.
+APP_VERSION = settings.app_version
 
 API_PREFIX = "/api"
 
