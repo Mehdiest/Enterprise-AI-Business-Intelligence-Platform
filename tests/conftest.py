@@ -1,4 +1,4 @@
-"""Shared pytest fixtures."""
+"""Shared pytest fixtures for async database and client testing."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from app.database import Base, get_db
 from app.dependencies.rate_limit import _attempts
 from app.main import app
 from app.models.user import User
-# ایمپورت ماژول executor برای دستکاری SessionLocal درون آن
+from app.monitoring import health as health_module
 from app.services.ai.copilot.agents.sql import executor as sql_executor_module
 
 
@@ -41,43 +41,46 @@ def reset_rate_limiter():
 
 @pytest_asyncio.fixture(scope="function")
 async def db():
-    engine = create_async_engine(_build_db_url(), pool_pre_ping=True)
-    
-    TestingSessionLocal = async_sessionmaker(
+    """Provide an isolated async database session."""
+    test_engine = create_async_engine(_build_db_url(), pool_pre_ping=True)
+    testing_session = async_sessionmaker(
         autocommit=False,
         autoflush=False,
         expire_on_commit=False,
-        bind=engine,
+        bind=test_engine,
     )
 
-    # ذخیره حالت اصلی و جایگزینی آن در ماژول executor
-    original_session_local = sql_executor_module.SessionLocal
-    sql_executor_module.SessionLocal = TestingSessionLocal
+    orig_sql_exec = sql_executor_module.SessionLocal
+    orig_health_engine = health_module.engine
+    
+    sql_executor_module.SessionLocal = testing_session
+    health_module.engine = test_engine
 
-    async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.drop_all)
-        await connection.run_sync(Base.metadata.create_all)
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
 
-    async with TestingSessionLocal() as session:
+    async with testing_session() as session:
         yield session
 
-    async with engine.begin() as connection:
-        await connection.run_sync(Base.metadata.drop_all)
-        
-    await engine.dispose()
+    async with test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+
+    await test_engine.dispose()
     
-    # بازگرداندن حالت اصلی پس از پایان تست
-    sql_executor_module.SessionLocal = original_session_local
+    sql_executor_module.SessionLocal = orig_sql_exec
+    health_module.engine = orig_health_engine
 
 
 @pytest_asyncio.fixture(scope="function")
 async def client(db):
+    """Provide an async HTTP client with overridden dependencies."""
     async def override_get_db():
         yield db
 
     app.dependency_overrides[get_db] = override_get_db
-
     transport = ASGITransport(app=app)
+
     async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
 
@@ -101,14 +104,14 @@ async def registered_user(client, test_user):
 
 @pytest_asyncio.fixture
 async def access_token(client, registered_user):
-    response = await client.post(
+    res = await client.post(
         "/auth/login",
         data={
             "username": registered_user["email"],
             "password": registered_user["password"],
         },
     )
-    return response.json()["access_token"]
+    return res.json()["access_token"]
 
 
 @pytest_asyncio.fixture
@@ -120,28 +123,26 @@ async def authorized_client(client, access_token):
 @pytest_asyncio.fixture
 async def admin_user(db, client, test_user):
     await client.post("/auth/register", json=test_user)
-
-    result = await db.execute(select(User).where(User.email == test_user["email"]))
-    user = result.scalar_one_or_none()
-
+    res = await db.execute(select(User).where(User.email == test_user["email"]))
+    user = res.scalar_one_or_none()
+    
     user.role = "admin"
-
     await db.commit()
     await db.refresh(user)
-
+    
     return test_user
 
 
 @pytest_asyncio.fixture
 async def admin_access_token(client, admin_user):
-    response = await client.post(
+    res = await client.post(
         "/auth/login",
         data={
             "username": admin_user["email"],
             "password": admin_user["password"],
         },
     )
-    return response.json()["access_token"]
+    return res.json()["access_token"]
 
 
 @pytest_asyncio.fixture
@@ -153,11 +154,9 @@ async def admin_client(client, admin_access_token):
 @pytest.fixture
 def sample_csv(tmp_path):
     file_path = tmp_path / "sales.csv"
-
     file_path.write_text(
         "customer_code,customer_name,product_code,product_name,region,channel,sale_date,quantity,amount\n"
         "C001,Alice,P001,Laptop,North,Online,2024-01-15,2,2400.00\n"
         "C002,Bob,P002,Phone,South,Retail,2024-01-16,1,800.00\n"
     )
-
     return file_path
