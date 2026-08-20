@@ -7,7 +7,6 @@ before data is transformed and loaded into the warehouse.
 
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -63,4 +62,4 @@ class ETLHealthResponse(BaseModel):
 
     status: str
     timestamp: datetime
-    version: Optional[str] = None
+    version: str | None = None

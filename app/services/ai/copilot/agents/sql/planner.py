@@ -1,47 +1,33 @@
-"""
-Enterprise SQL planner.
-"""
+"""SQL planner that decides whether a question requires warehouse SQL."""
 
 from __future__ import annotations
 
 from .models import SQLPlan
 
+_SQL_KEYWORDS = (
+    "sales",
+    "revenue",
+    "product",
+    "customer",
+    "order",
+    "region",
+    "month",
+    "year",
+    "top",
+    "average",
+    "sum",
+    "count",
+    "total",
+)
+
 
 class SQLPlanner:
-    """
-    Determine whether a question requires SQL execution.
-    """
+    """Determine whether a question requires SQL execution."""
 
-    SQL_KEYWORDS = (
-        "sales",
-        "revenue",
-        "product",
-        "customer",
-        "order",
-        "region",
-        "month",
-        "year",
-        "top",
-        "average",
-        "sum",
-        "count",
-        "total",
-    )
-
-    def build_plan(
-        self,
-        question: str,
-    ) -> SQLPlan:
-        """
-        Create SQL execution plan from user intent.
-        """
-
-        normalized_question = question.lower()
-
-        requires_sql = any(
-            keyword in normalized_question
-            for keyword in self.SQL_KEYWORDS
-        )
+    def build_plan(self, question: str) -> SQLPlan:
+        """Create a SQL execution plan from user intent."""
+        normalized = question.lower()
+        requires_sql = any(keyword in normalized for keyword in _SQL_KEYWORDS)
 
         return SQLPlan(
             requires_sql=requires_sql,

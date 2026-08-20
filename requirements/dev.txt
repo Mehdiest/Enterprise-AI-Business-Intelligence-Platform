@@ -1,12 +1,20 @@
-pytest
-pytest-asyncio
+# ============================================================================
+# Development & CI dependencies — PINNED for deterministic builds.
+#
+# These power the CI quality gates: lint (ruff), format check (black),
+# static typing (mypy), tests + coverage (pytest), and the dependency
+# vulnerability audit (pip-audit).
+# ============================================================================
 
-pytest-cov
+pytest==9.1.1
+pytest-asyncio==1.4.0
+pytest-cov==7.1.0
 
-black
+black==26.5.1
+ruff==0.16.3
+mypy==2.3.1
 
-ruff
+pre-commit==4.6.2
 
-mypy
-
-pre-commit
+# Dependency vulnerability scanning for the CI audit gate.
+pip-audit==2.10.1

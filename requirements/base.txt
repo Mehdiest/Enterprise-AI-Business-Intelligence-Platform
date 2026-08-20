@@ -1,43 +1,67 @@
-fastapi
-uvicorn[standard]
+# ============================================================================
+# Base runtime dependencies — PINNED for deterministic, reproducible builds.
+#
+# Versions reflect the tested, known-good environment. Do not loosen these
+# without re-running the full test suite and CI quality gates. Bump
+# deliberately (one change per PR) so regressions are bisectable.
+# ============================================================================
 
-sqlalchemy
-asyncpg
-alembic
+# --- Web framework / ASGI ---
+fastapi==0.141.1
+starlette==1.6.0
+uvicorn[standard]==0.52.4
 
-pydantic
-pydantic-settings
+# --- Database / ORM / migrations ---
+sqlalchemy==2.0.52
+asyncpg==0.31.0
+alembic==1.19.1
+greenlet==3.5.5
 
-python-dotenv
+# --- Settings / validation ---
+pydantic==2.13.4
+pydantic-settings==2.15.0
+python-dotenv==1.2.3
 
-pandas
-numpy
+# --- Data processing ---
+pandas==3.0.5
+numpy==2.5.2
 
-faiss-cpu
+# --- Vector search ---
+faiss-cpu==1.15.0
 
-openpyxl
-xlsxwriter
+# --- Spreadsheet I/O ---
+openpyxl==3.1.5
+xlsxwriter==3.2.9
 
-python-multipart
+# --- HTTP / uploads ---
+python-multipart==0.0.32
+httpx==0.28.1
+anyio==4.14.2
 
-httpx
-redis>=5.0.0
+# --- Caching / rate limiting backend ---
+redis==8.1.0
 
-jinja2
+# --- Templating ---
+jinja2==3.1.6
 
-loguru
+# --- Logging / system metrics ---
+loguru==0.7.3
+psutil==7.2.2
 
-psutil
+# --- ML utilities ---
+scikit-learn==1.9.0
 
-scikit-learn
+# --- LLM SDK / tokenization ---
+openai==3.3.0
+tiktoken==0.14.0
 
-openai>=1.30.0
-tiktoken>=0.7.0
+# --- Email validation ---
+email-validator==2.3.0
 
-email-validator>=2.2.0
-
+# --- Auth / crypto ---
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
 
-sqlparse>=0.5.0
+# --- SQL parsing / validation ---
+sqlparse==0.6.0

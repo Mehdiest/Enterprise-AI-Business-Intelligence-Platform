@@ -1,23 +1,15 @@
-"""
-Base retriever agent.
-"""
+"""Base retriever agent."""
 
 from __future__ import annotations
 
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
+
+from app.services.ai.copilot.context_runtime import ExecutionContext
 
 
-class BaseRetrieverAgent(
-    ABC,
-):
-    """
-    Base retrieval interface.
-    """
+class BaseRetrieverAgent(ABC):
+    """Base retrieval interface."""
 
     @abstractmethod
-    def run(
-        self,
-        context: dict,
-    ) -> dict:
+    async def run(self, context: ExecutionContext) -> ExecutionContext:
         ...

@@ -1,8 +1,8 @@
 from .base import BaseVectorStore
-from .faiss_store import FAISSVectorStore
 from .factory import VectorStoreFactory
-from .knowledge_base import KnowledgeBaseBuilder
+from .faiss_store import FAISSVectorStore
 from .index_builder import SemanticIndexBuilder
+from .knowledge_base import KnowledgeBaseBuilder
 from .manager import VectorManager
 
 __all__ = [

@@ -2,8 +2,7 @@
 Forecast response schemas.
 """
 
-from pydantic import BaseModel
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 
 class RevenueForecastResponse(BaseModel):

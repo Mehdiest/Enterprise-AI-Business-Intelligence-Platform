@@ -4,17 +4,14 @@ Runtime execution context models.
 
 from __future__ import annotations
 
-from pydantic import BaseModel
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 from app.services.ai.copilot.agents.planner.models import (
     ExecutionPlan,
 )
-
 from app.services.ai.copilot.context.models import (
     RetrievalContext,
 )
-
 from app.services.ai.copilot.intent.models import (
     IntentResult,
 )

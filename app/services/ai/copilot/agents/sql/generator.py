@@ -9,15 +9,14 @@ import re
 from app.services.ai.providers import ProviderFactory
 
 from .models import SQLGenerationResult, SQLPlan
-from .prompts import (
-    SQL_SYSTEM_PROMPT,
-    WAREHOUSE_SCHEMA,
-)
+from .prompts import SQL_SYSTEM_PROMPT, WAREHOUSE_SCHEMA
 
 logger = logging.getLogger(__name__)
 
 
 class SQLGenerator:
+    """Generate SQL via an LLM provider, falling back to safe templates."""
+
     def __init__(self, provider=None) -> None:
         self.provider = provider or ProviderFactory.create()
 
@@ -53,23 +52,12 @@ class SQLGenerator:
     def _extract_sql(value: str | None) -> str:
         if not value:
             return ""
-        match = re.search(
-            r"```(?:sql)?\s*(.*?)```",
-            value,
-            re.IGNORECASE | re.DOTALL,
-        )
-        return (
-            match.group(1)
-            if match
-            else value
-        ).strip().rstrip(";")
+        match = re.search(r"```(?:sql)?\s*(.*?)```", value, re.IGNORECASE | re.DOTALL)
+        return (match.group(1) if match else value).strip().rstrip(";")
 
     @staticmethod
     def _is_safe_select(sql: str) -> bool:
-        return (
-            bool(re.match(r"^\s*select\b", sql, re.IGNORECASE))
-            and ";" not in sql
-        )
+        return bool(re.match(r"^\s*select\b", sql, re.IGNORECASE)) and ";" not in sql
 
     @staticmethod
     def _fallback(question: str) -> str:

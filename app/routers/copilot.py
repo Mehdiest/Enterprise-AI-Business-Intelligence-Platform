@@ -8,13 +8,11 @@ from fastapi import APIRouter, Depends
 
 from app.dependencies.auth import get_current_user
 from app.models.user import User
-
 from app.schemas.copilot import (
     CopilotRequest,
     CopilotResponse,
     SourceItem,
 )
-
 from app.services.ai.copilot.service import (
     CopilotService,
 )

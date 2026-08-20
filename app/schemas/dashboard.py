@@ -5,8 +5,7 @@ These schemas define the contract between the analytics
 layer and dashboard/API consumers.
 """
 
-from pydantic import BaseModel
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 
 class KPIResponse(BaseModel):

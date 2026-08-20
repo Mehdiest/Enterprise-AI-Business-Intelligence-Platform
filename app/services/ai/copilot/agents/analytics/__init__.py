@@ -1,9 +1,7 @@
-"""
-Analytics Agent.
-"""
+"""Analytics agent package."""
 
-from .base import BaseAnalyticsAgent
 from .agent import AnalyticsAgent
+from .base import BaseAnalyticsAgent
 
 __all__ = [
     "BaseAnalyticsAgent",

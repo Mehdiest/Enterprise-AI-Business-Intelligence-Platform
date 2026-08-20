@@ -7,27 +7,21 @@ from __future__ import annotations
 from app.services.ai.copilot.models import (
     SourceReference,
 )
-
 from app.services.ai.copilot.response.citation import (
     CitationEngine,
 )
-
 from app.services.ai.copilot.response.confidence import (
     ConfidenceEngine,
 )
-
 from app.services.ai.copilot.response.formatter import (
     ResponseFormatter,
 )
-
 from app.services.ai.copilot.response.guard import (
     HallucinationGuard,
 )
-
 from app.services.ai.copilot.response.models import (
     StructuredResponse,
 )
-
 from app.services.ai.copilot.response.validator import (
     ResponseValidator,
 )

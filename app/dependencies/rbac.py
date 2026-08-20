@@ -6,9 +6,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from fastapi import Depends
-from fastapi import HTTPException
-from fastapi import status
+from fastapi import Depends, HTTPException, status
 
 from app.dependencies.auth import get_current_user
 from app.models.user import User
@@ -55,6 +53,9 @@ class RoleRequired:
 # ==========================================================
 # Common role dependencies
 # ==========================================================
+#
+# Role hierarchy (most to least privileged): admin > analyst > viewer.
+# Each dependency lists every role permitted at or above its access tier.
 
 require_admin = RoleRequired(
     [
@@ -62,9 +63,18 @@ require_admin = RoleRequired(
     ]
 )
 
+require_analyst = RoleRequired(
+    [
+        "admin",
+        "analyst",
+    ]
+)
+
 require_viewer = RoleRequired(
     [
         "admin",
+        "analyst",
         "viewer",
     ]
 )
+

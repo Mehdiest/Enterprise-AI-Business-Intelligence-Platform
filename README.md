@@ -178,7 +178,7 @@ Enterprise Response  (answer + confidence + cited sources)
 - Strict token-type separation — a refresh token can never be used as an access token
 - Enterprise Role-Based Access Control (RBAC)
 - Centralized authorization dependency layer
-- Protected API endpoints with Admin / Analyst / User permissions
+- Protected API endpoints with Admin / Analyst / Viewer permissions
 - OAuth2 Password Flow integration with Swagger UI
 - Secure password hashing with bcrypt
 - Production-ready CORS whitelist configuration
@@ -416,7 +416,7 @@ OPENAI_API_KEY=
 ```
 
 > Leave `OPENAI_API_KEY` empty to use the mock provider — it echoes real warehouse query results for demo purposes.
-> Set `APP_ENV=production` to enforce a strong `SECRET_KEY` and disable automatic schema creation.
+> Set `APP_ENV=production` to enforce a strong `SECRET_KEY`. The database schema is **always** managed by Alembic migrations (`alembic upgrade head`) — the application never creates tables at runtime, in any environment.
 
 ### Docker Setup (Recommended)
 
@@ -436,16 +436,30 @@ make docker-logs
 make docker-down
 ```
 
+> On startup the API container runs `alembic upgrade head` automatically
+> (via `docker-entrypoint.sh`) before serving traffic, so the schema is always
+> applied deterministically — no manual migration step is required in Docker.
+
 ### Local Setup
 
 ```bash
-pip install -r requirements/base.txt
+# 1. Install dependencies
+pip install -r requirements/base.txt -r requirements/ai.txt
+
+# 2. Apply database migrations (schema is owned by Alembic, not the app)
+alembic upgrade head
+
+# 3. Start the API
 uvicorn app.main:app --reload
 
-# Or
-make install
+# Or, using the Makefile
+make install       # runtime dependencies
+make migrate       # alembic upgrade head
 make run
 ```
+
+> The application no longer creates tables at runtime. A fresh database is
+> brought fully up to date **only** through `alembic upgrade head`.
 
 ### API Documentation
 
@@ -587,16 +601,17 @@ curl -X POST http://localhost:8000/copilot/query \
 - Token-type enforcement — refresh tokens are rejected on access-protected endpoints and vice versa
 - Enterprise Role-Based Access Control (RBAC)
 - Centralized authorization dependency (RoleRequired)
-- Endpoint-level permission enforcement (Admin / Analyst / User)
+- Endpoint-level permission enforcement (Admin / Analyst / Viewer)
 - SQL parsing and validation using sqlparse
+- Read-only Copilot SQL execution — validated queries run inside a `SET TRANSACTION READ ONLY` block with a configurable `statement_timeout` (`SQL_STATEMENT_TIMEOUT_MS`), so writes and runaway queries are blocked at the database layer
 - SQLAlchemy connection pooling for production workloads
 - Protected endpoints via FastAPI dependency injection (`get_current_user`)
 - Inactive-user check — disabled accounts are blocked at token validation
-- Login rate limiting — sliding-window throttle prevents brute-force attacks
-- CORS middleware with configurable allowed origins (`CORS_ORIGINS`)
+- Auth rate limiting — sliding-window throttle on both `/auth/login` and `/auth/refresh` prevents brute-force and refresh-replay attacks; empty client buckets are pruned to bound memory
+- CORS whitelist enforcement — the wildcard `CORS_ORIGINS='*'` is rejected in production, and credentials are automatically disabled whenever the wildcard is active, so the unsafe `*`-with-credentials combination is impossible
 - SECRET_KEY startup guard — rejects known-insecure defaults in production
 - Upload size limit — configurable `MAX_UPLOAD_MB` with streamed enforcement
-- Environment-aware schema management — `create_all` disabled in production
+- Deterministic schema management — the application NEVER creates tables at runtime; schema is applied exclusively via Alembic migrations (`alembic upgrade head`), so deployments are reproducible and reviewable
 - Authentication required for ETL ingestion and Copilot endpoints
 - No secrets in source code — environment variable management only
 - SQLAlchemy ORM prevents SQL injection on application queries
@@ -623,6 +638,18 @@ curl -X POST http://localhost:8000/copilot/query \
 
 ## Changelog
 
+### Unreleased — Deterministic Deployment (Phase 1)
+
+- **Real baseline migration** — the previously-empty `001_initial_star_schema` now creates the full schema (users + star-schema warehouse) exactly as the ORM defines it; `002` continues to add the refresh-token columns on top.
+- **Alembic wiring** — added `alembic.ini`, an async-aware `alembic/env.py`, and `script.py.mako`, so `alembic upgrade head` / `downgrade base` work out of the box against the asyncpg database.
+- **No runtime schema creation** — removed `Base.metadata.create_all` from application startup entirely (all environments). Schema is now owned exclusively by Alembic.
+- **Migrate-then-serve** — the Docker image runs `alembic upgrade head` via `docker-entrypoint.sh` before starting uvicorn, and a `make migrate` target was added.
+- **Migration tests** — `tests/test_migrations.py` proves an empty database reaches the full schema only through migrations, round-trips to `base`, and stays in sync with the ORM (no autogenerate drift). Test fixtures now build the schema via `alembic upgrade head` instead of `create_all`.
+- **Offline migration gate** — `tests/test_migrations_offline.py` (`make test-offline`) validates the revision chain, renders the full upgrade DDL via Alembic offline mode, and asserts no `create_all` in `app/` — all without a database, Docker, or network, so it runs as a pre-push check on a bare clone.
+- **Pinned dependencies** — `requirements/*.txt` are now fully version-pinned for reproducible builds; added `pip-audit` for the CI vulnerability gate.
+- **CI quality gates** — the workflow now runs ruff, black `--check`, mypy, a dedicated migrations job, pytest with coverage thresholds, and a dependency audit.
+- **Repository hygiene** — removed the committed `.memory.sqlite3`; `.gitignore` / `.dockerignore` now exclude `*.sqlite` / `*.sqlite3` and other runtime artifacts.
+
 ### v1.0.6 — Token Rotation & Async Health Hardening Release
 
 - **Refresh Token Rotation** — `AuthService` now issues a brand-new token pair on every refresh and stores the active token as a SHA-256 hash alongside a unique `jti`. Replaying a previously used refresh token returns `HTTP 401`, which closes the token-reuse window and enforces a single active session per user.
@@ -632,6 +659,11 @@ curl -X POST http://localhost:8000/copilot/query \
 - **Health & Probes** — the database probe is fully async and catches `SQLAlchemyError` instead of failing the request; `/health` returns `503` when degraded, and dedicated `/live` / `/ready` endpoints were added for Kubernetes-style orchestration.
 - **CSV Ingestion** — uploads stream to a temporary file with the size limit enforced mid-stream (`HTTP 413`), and the temp file is always removed in a `finally` block — even when the write itself fails.
 - **Tests** — added a regression suite (`tests/test_token_hardening.py`) covering rotation, replay rejection, token-type confusion, and validator bypass attempts.
+- **Production Schema Guard** — `create_all` now runs only outside production; production deployments rely exclusively on Alembic migrations, so the app can no longer silently create tables against a production database.
+- **CORS Hardening** — `CORS_ORIGINS='*'` is now rejected at startup in production, and `allow_credentials` is automatically disabled whenever the wildcard origin is active, eliminating the unsafe `*`-with-credentials configuration.
+- **Auth Rate Limiting** — the sliding-window limiter now also guards `/auth/refresh` (not just `/auth/login`), and prunes empty client buckets once per window to bound memory growth.
+- **Read-Only Copilot SQL** — validated SQL executes inside a `SET TRANSACTION READ ONLY` transaction with a configurable `statement_timeout` (`SQL_STATEMENT_TIMEOUT_MS`, default 30 s), adding a database-level defense beyond the app validator.
+- **Role Unification** — roles are unified to a clear hierarchy (`admin` > `analyst` > `viewer`) with a matching `require_analyst` dependency; the README and registration default (`viewer`) are aligned to the same set.
 - **Version** — `app_version` bumped to `1.0.6`.
 
 ### v1.0.5 — Full Async Migration & Stability Release

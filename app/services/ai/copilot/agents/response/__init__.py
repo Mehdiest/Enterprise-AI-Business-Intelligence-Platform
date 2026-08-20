@@ -1,6 +1,4 @@
-"""
-Enterprise Response Agent package.
-"""
+"""Response agent package."""
 
 from .agent import ResponseAgent
 from .base import BaseResponseAgent

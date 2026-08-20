@@ -4,8 +4,7 @@ Enterprise Tool Router.
 
 from __future__ import annotations
 
-from .models import ToolContext
-from .models import ToolResult
+from .models import ToolContext, ToolResult
 
 
 class ToolRouter:

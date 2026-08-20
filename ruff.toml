@@ -21,4 +21,25 @@ select = [
 
 ignore = [
     "E501",
+    # `Depends()`, `File()`, `Query()`, `Body()` in argument defaults is the
+    # intended FastAPI idiom — not a real mutable-default-argument bug — so the
+    # flake8-bugbear B008 warning is a false positive across this codebase.
+    "B008",
+    # `class X(str, Enum)` is a deliberate, widely-used pattern here. Migrating
+    # to `enum.StrEnum` changes `str()`/serialization behavior, so this
+    # modernization is intentionally deferred (out of scope for Phase 1).
+    "UP042",
 ]
+
+
+[lint.per-file-ignores]
+# conftest MUST call load_dotenv(".env.test") before importing app.* modules,
+# because those modules read settings at import time. The resulting import
+# ordering is intentional, so E402 ("module level import not at top of file")
+# is expected here.
+"tests/conftest.py" = ["E402"]
+
+# Package __init__.py files are re-export hubs: importing names purely so they
+# are available as `package.Name` is intentional, so F401 ("imported but
+# unused") does not apply.
+"**/__init__.py" = ["F401"]

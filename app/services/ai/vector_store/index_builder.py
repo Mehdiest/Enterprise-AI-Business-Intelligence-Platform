@@ -7,19 +7,15 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from app.schemas.knowledge import KnowledgeDocument
-
 from app.services.ai.embeddings import (
     EmbeddingService,
 )
-
 from app.services.ai.knowledge.engine import (
     KnowledgeEngine,
 )
-
 from app.services.ai.vector_store import (
     VectorStoreFactory,
 )
-
 from app.services.ai.vector_store.base import (
     BaseVectorStore,
 )

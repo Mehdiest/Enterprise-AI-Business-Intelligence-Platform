@@ -1,6 +1,4 @@
-"""
-Enterprise AI Providers.
-"""
+"""LLM provider package."""
 
 from .base import BaseLLMProvider
 from .factory import ProviderFactory

@@ -63,6 +63,7 @@ class FAISSVectorStore(BaseVectorStore):
         for score, idx in zip(
             scores[0],
             indices[0],
+            strict=True,
         ):
 
             if idx == -1:

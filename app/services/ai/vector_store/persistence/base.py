@@ -4,8 +4,7 @@ Persistence interface for vector stores.
 
 from __future__ import annotations
 
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Any
 
 

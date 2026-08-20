@@ -1,18 +1,13 @@
-"""
-Base LLM provider.
-"""
+"""Base LLM provider."""
 
 from __future__ import annotations
 
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
 
 class BaseLLMProvider(ABC):
+    """Base interface for LLM providers."""
 
     @abstractmethod
-    def generate(
-        self,
-        prompt: str,
-    ) -> str:
+    def generate(self, prompt: str) -> str:
         ...

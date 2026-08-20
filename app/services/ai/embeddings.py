@@ -7,8 +7,9 @@ local transformer models.
 
 from __future__ import annotations
 
-from openai import OpenAI
 import os
+
+from openai import OpenAI
 
 
 class EmbeddingService:

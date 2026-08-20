@@ -4,8 +4,7 @@ Copilot API schemas.
 
 from __future__ import annotations
 
-from pydantic import BaseModel
-from pydantic import Field
+from pydantic import BaseModel, Field
 
 
 class CopilotRequest(BaseModel):

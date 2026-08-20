@@ -11,11 +11,9 @@ from app.models.warehouse import (
     DimRegion,
     FactSales,
 )
-
 from app.schemas.knowledge import (
     KnowledgeDocument,
 )
-
 from app.services.ai.knowledge.base import (
     BaseKnowledgeBuilder,
 )

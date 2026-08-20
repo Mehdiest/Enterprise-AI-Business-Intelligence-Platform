@@ -25,6 +25,17 @@ env
 # Tests & cache
 .pytest_cache
 tests/__pycache__
+.coverage
+htmlcov
+
+# Local databases / runtime artifacts (never bake into the image)
+*.sqlite
+*.sqlite3
+.memory.sqlite3
+*.db
+vectorstore
+logs
+*.log
 
 # IDE
 .vscode

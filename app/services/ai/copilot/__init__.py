@@ -1,9 +1,8 @@
 """
 Enterprise AI Copilot.
 """
-from .service import CopilotService
-
 from .context import ContextBuilder
+from .service import CopilotService
 
 __all__ = [
     "CopilotService",

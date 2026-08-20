@@ -4,8 +4,7 @@ AI API endpoints.
 
 from __future__ import annotations
 
-from fastapi import APIRouter
-from fastapi import Depends
+from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db

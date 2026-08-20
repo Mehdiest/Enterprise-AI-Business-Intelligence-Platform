@@ -12,8 +12,8 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env.test")
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 
 from app.database import Base, get_db
 from app.dependencies.rate_limit import _attempts
@@ -30,6 +30,13 @@ def _build_db_url() -> str:
     user = os.getenv("POSTGRES_USER", "test")
     password = os.getenv("POSTGRES_PASSWORD", "test")
     return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{db}"
+
+
+async def _reset_schema(engine: AsyncEngine) -> None:
+    """Drop all application tables and the alembic version table."""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.execute(text("DROP TABLE IF EXISTS alembic_version"))
 
 
 @pytest.fixture(autouse=True)

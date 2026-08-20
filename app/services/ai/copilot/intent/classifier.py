@@ -7,7 +7,6 @@ from __future__ import annotations
 from app.services.ai.copilot.intent.base import (
     BaseIntentClassifier,
 )
-
 from app.services.ai.copilot.intent.models import (
     IntentResult,
     IntentType,

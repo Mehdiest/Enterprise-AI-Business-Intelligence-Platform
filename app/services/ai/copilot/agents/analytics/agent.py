@@ -1,59 +1,29 @@
-"""
-Enterprise Analytics Agent.
-"""
+"""Analytics agent that summarizes retrieved documents."""
 
 from __future__ import annotations
 
-from app.services.ai.copilot.context_runtime import (
-    ExecutionContext,
-)
+from app.services.ai.copilot.context_runtime import ExecutionContext
 
-from .base import (
-    BaseAnalyticsAgent,
-)
+from .base import BaseAnalyticsAgent
 
 
-class AnalyticsAgent(
-    BaseAnalyticsAgent,
-):
-    """
-    Extracts business analytics from
-    retrieved semantic context.
-    """
+class AnalyticsAgent(BaseAnalyticsAgent):
+    """Extract business analytics from retrieved semantic context."""
 
-    def run(
-        self,
-        context: ExecutionContext,
-    ) -> ExecutionContext:
-
-        documents = []
-
-        if context.retrieved_context:
-
-            documents = (
-                context.retrieved_context.documents
-            )
+    def run(self, context: ExecutionContext) -> ExecutionContext:
+        documents = (
+            context.retrieved_context.documents
+            if context.retrieved_context
+            else []
+        )
 
         context.analytics = {
-
-            "document_count":
-                len(documents),
-
-            "highest_score":
-                max(
-                    (
-                        d.score
-                        for d in documents
-                    ),
-                    default=0.0,
-                ),
-
-            "top_document":
-                (
-                    documents[0].text
-                    if documents
-                    else None
-                ),
+            "document_count": len(documents),
+            "highest_score": max(
+                (doc.score for doc in documents),
+                default=0.0,
+            ),
+            "top_document": documents[0].text if documents else None,
         }
 
         return context

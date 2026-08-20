@@ -10,17 +10,14 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from app.schemas.knowledge import KnowledgeDocument
-
+from app.services.ai.knowledge.kpi import (
+    KPIKnowledgeBuilder,
+)
 from app.services.ai.knowledge.product import (
     ProductKnowledgeBuilder,
 )
-
 from app.services.ai.knowledge.region import (
     RegionKnowledgeBuilder,
-)
-
-from app.services.ai.knowledge.kpi import (
-    KPIKnowledgeBuilder,
 )
 
 

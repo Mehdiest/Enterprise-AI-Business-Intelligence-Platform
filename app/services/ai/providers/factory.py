@@ -1,6 +1,4 @@
-"""
-Enterprise Provider Factory.
-"""
+"""LLM provider factory."""
 
 from __future__ import annotations
 
@@ -12,17 +10,11 @@ from .openai_provider import OpenAIProvider
 
 
 class ProviderFactory:
-    """
-    Returns the appropriate provider
-    depending on the current environment.
-    """
+    """Select an LLM provider based on configuration."""
 
     @staticmethod
     def create() -> BaseLLMProvider:
-        """
-        Create configured LLM provider.
-        """
-
+        """Return the OpenAI provider when a key is set, else the mock provider."""
         if settings.openai_api_key:
             return OpenAIProvider()
 

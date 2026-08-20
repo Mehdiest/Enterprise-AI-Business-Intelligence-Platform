@@ -1,6 +1,6 @@
-"""In-memory sliding-window rate limiter for login endpoint.
+"""In-memory sliding-window rate limiter for auth endpoints.
 
-For multi-instance deployments, replace with a Redis-backed store.
+Single-process only; use a Redis-backed store for multi-instance deployments.
 """
 
 from __future__ import annotations
@@ -14,22 +14,35 @@ _MAX_ATTEMPTS = 10
 _WINDOW_SECONDS = 60
 
 _attempts: dict[str, list[float]] = defaultdict(list)
+_last_sweep = 0.0
 
 
-def login_rate_limit(request: Request) -> None:
-    """Dependency — raises 429 after too many login attempts from one IP."""
-
+def auth_rate_limit(request: Request) -> None:
+    """Raise 429 after too many auth attempts from one client IP."""
     client_ip = request.client.host if request.client else "unknown"
     now = time.time()
-    window_start = now - _WINDOW_SECONDS
+    _sweep_expired(now)
 
-    bucket = _attempts[client_ip]
-    _attempts[client_ip] = [ts for ts in bucket if ts > window_start]
-
-    if len(_attempts[client_ip]) >= _MAX_ATTEMPTS:
+    cutoff = now - _WINDOW_SECONDS
+    fresh = [ts for ts in _attempts[client_ip] if ts > cutoff]
+    if len(fresh) >= _MAX_ATTEMPTS:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Too many login attempts. Try again later.",
+            detail="Too many attempts. Try again later.",
         )
 
-    _attempts[client_ip].append(now)
+    fresh.append(now)
+    _attempts[client_ip] = fresh
+
+
+def _sweep_expired(now: float) -> None:
+    """Drop expired IP buckets, at most once per window, to bound memory."""
+    global _last_sweep
+    if now - _last_sweep < _WINDOW_SECONDS:
+        return
+
+    _last_sweep = now
+    cutoff = now - _WINDOW_SECONDS
+    for ip in list(_attempts):
+        if not any(ts > cutoff for ts in _attempts[ip]):
+            del _attempts[ip]

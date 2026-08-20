@@ -1,25 +1,16 @@
-"""
-Base planner interface.
-"""
+"""Base planner interface."""
 
 from __future__ import annotations
 
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
-from app.services.ai.copilot.context.models import (
-    RetrievalContext,
-)
+from app.services.ai.copilot.context.models import RetrievalContext
 
 from .models import ExecutionPlan
 
 
-class BasePlanner(
-    ABC,
-):
-    """
-    Abstract planner.
-    """
+class BasePlanner(ABC):
+    """Abstract planner."""
 
     @abstractmethod
     def build_plan(

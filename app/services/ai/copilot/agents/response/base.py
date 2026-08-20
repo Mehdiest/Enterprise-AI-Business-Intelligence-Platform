@@ -1,31 +1,17 @@
-"""
-Base Response Agent.
-"""
+"""Base response agent."""
 
 from __future__ import annotations
 
-from abc import ABC
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 
-from app.services.ai.copilot.context_runtime import (
-    ExecutionContext,
-)
+from app.services.ai.copilot.context_runtime import ExecutionContext
 
-from .models import (
-    ResponseContext,
-)
+from .models import ResponseContext
 
 
-class BaseResponseAgent(
-    ABC,
-):
-    """
-    Base response interface.
-    """
+class BaseResponseAgent(ABC):
+    """Base response interface."""
 
     @abstractmethod
-    def run(
-        self,
-        context: ExecutionContext,
-    ) -> ResponseContext:
+    def run(self, context: ExecutionContext) -> ResponseContext:
         ...

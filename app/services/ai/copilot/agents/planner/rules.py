@@ -1,38 +1,21 @@
-"""
-Planner routing rules.
-"""
+"""Planner routing rules."""
 
 from __future__ import annotations
 
 from .models import ExecutionStep
 
+_CHART_WORDS = ("chart", "plot", "graph", "visual")
+_ANALYTICS_WORDS = ("sales", "revenue", "product", "region", "best", "top")
+
 
 class PlannerRules:
-    """
-    Rule repository used by
-    the planner agent.
-    """
+    """Resolve a question to an ordered set of execution steps."""
 
     @staticmethod
-    def resolve(
-        question: str,
-    ) -> tuple[
-        list[ExecutionStep],
-        str,
-    ]:
-
+    def resolve(question: str) -> tuple[list[ExecutionStep], str]:
         q = question.lower()
 
-        if any(
-            word in q
-            for word in (
-                "chart",
-                "plot",
-                "graph",
-                "visual",
-            )
-        ):
-
+        if any(word in q for word in _CHART_WORDS):
             return (
                 [
                     ExecutionStep.RETRIEVE,
@@ -43,18 +26,7 @@ class PlannerRules:
                 "Chart request detected.",
             )
 
-        if any(
-            word in q
-            for word in (
-                "sales",
-                "revenue",
-                "product",
-                "region",
-                "best",
-                "top",
-            )
-        ):
-
+        if any(word in q for word in _ANALYTICS_WORDS):
             return (
                 [
                     ExecutionStep.RETRIEVE,
@@ -66,9 +38,6 @@ class PlannerRules:
             )
 
         return (
-            [
-                ExecutionStep.RETRIEVE,
-                ExecutionStep.RESPONSE,
-            ],
+            [ExecutionStep.RETRIEVE, ExecutionStep.RESPONSE],
             "Default execution strategy.",
         )

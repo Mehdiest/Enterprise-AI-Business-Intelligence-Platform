@@ -1,6 +1,4 @@
-"""
-Application configuration loaded from environment.
-"""
+"""Application configuration loaded from environment variables."""
 
 from __future__ import annotations
 
@@ -22,69 +20,33 @@ _UNSAFE_SECRETS = {
 
 
 class Settings(BaseSettings):
-    """
-    Application settings loaded from environment variables.
-    """
-
-    # ==========================================================
-    # Application
-    # ==========================================================
+    """Settings loaded from environment variables."""
 
     project_name: str = "Enterprise AI Business Intelligence Platform"
-
     app_version: str = "1.0.6"
-
     api_v1_prefix: str = "/api/v1"
-
     app_env: str = "development"
 
-    # ==========================================================
-    # Database
-    # ==========================================================
-
     postgres_host: str
-
     postgres_port: int
-
     postgres_db: str
-
     postgres_user: str
-
     postgres_password: str
 
-    # ==========================================================
-    # Authentication
-    # ==========================================================
-
     secret_key: str
-
     algorithm: str = "HS256"
-
     access_token_expire_minutes: int = 60
-
     refresh_token_expire_days: int = 7
-
-    # ==========================================================
-    # CORS
-    # ==========================================================
 
     cors_origins: str = "*"
 
-    # ==========================================================
-    # Upload
-    # ==========================================================
-
     max_upload_mb: int = 10
 
-    # ==========================================================
-    # AI
-    # ==========================================================
-
     openai_api_key: str = ""
-
-    # Conversation memory
     memory_ttl_seconds: int = 86_400
     memory_database_path: str = ".memory.sqlite3"
+
+    sql_statement_timeout_ms: int = 30_000
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -93,18 +55,12 @@ class Settings(BaseSettings):
 
     @property
     def is_production(self) -> bool:
-        """
-        Return True when running in production.
-        """
-
+        """Return True when running in production."""
         return self.app_env.strip().lower() == "production"
 
     @property
     def database_url(self) -> str:
-        """
-        SQLAlchemy PostgreSQL connection URL.
-        """
-
+        """SQLAlchemy PostgreSQL connection URL."""
         return (
             f"postgresql+asyncpg://"
             f"{self.postgres_user}:"
@@ -116,20 +72,19 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        """
-        Parse CORS origins.
-        """
-
+        """Return CORS origins parsed from the comma-separated whitelist."""
         return [
             origin.strip() for origin in self.cors_origins.split(",") if origin.strip()
         ]
 
+    @property
+    def cors_allow_all(self) -> bool:
+        """Return True when the origin whitelist is the wildcard."""
+        return self.cors_origin_list == ["*"]
+
     @model_validator(mode="after")
     def validate_secret_key(self) -> Settings:
-        """
-        Reject insecure SECRET_KEY values in production.
-        """
-
+        """Reject insecure SECRET_KEY values in production."""
         if self.secret_key.strip() not in _UNSAFE_SECRETS:
             return self
 
@@ -139,7 +94,21 @@ class Settings(BaseSettings):
             )
 
         logger.warning("Using insecure SECRET_KEY. Allowed only in development.")
+        return self
 
+    @model_validator(mode="after")
+    def validate_cors(self) -> Settings:
+        """Reject the wildcard CORS origin in production."""
+        if not self.cors_allow_all:
+            return self
+
+        if self.is_production:
+            raise ValueError(
+                "CORS_ORIGINS='*' is not allowed in production. "
+                "Set an explicit comma-separated origin whitelist."
+            )
+
+        logger.warning("CORS open to all origins ('*'); credentials disabled.")
         return self
 
 

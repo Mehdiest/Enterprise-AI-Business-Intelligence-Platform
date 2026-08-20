@@ -1,0 +1,31 @@
+# Coverage configuration for the CI "coverage" gate (PR 6).
+#
+# `pytest --cov=app` reads these settings. The build fails if total line
+# coverage drops below `fail_under`, guarding against untested regressions.
+
+[run]
+source = app
+branch = True
+omit =
+    app/main.py
+    */__init__.py
+    alembic/*
+    tests/*
+
+[report]
+# Start with an achievable floor; ratchet upward as coverage improves.
+fail_under = 70
+show_missing = True
+skip_covered = False
+precision = 1
+
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    raise NotImplementedError
+    if TYPE_CHECKING:
+    if __name__ == .__main__.:
+    \.\.\.
+
+[xml]
+output = coverage.xml

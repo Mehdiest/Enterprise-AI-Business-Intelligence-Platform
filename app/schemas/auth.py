@@ -4,10 +4,7 @@ Authentication schemas.
 
 from __future__ import annotations
 
-from pydantic import BaseModel
-from pydantic import ConfigDict
-from pydantic import EmailStr
-from pydantic import Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class RegisterRequest(BaseModel):

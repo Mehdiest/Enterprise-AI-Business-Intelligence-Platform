@@ -1,13 +1,15 @@
-langchain
+# ============================================================================
+# AI / LLM dependencies — PINNED for deterministic builds.
+#
+# LangChain moves fast and frequently makes breaking changes across minor
+# versions, so these are pinned to the exact tested versions. Bump one at a
+# time and re-run the copilot test suite.
+#
+# NOTE: openai, tiktoken, python-jose and passlib are declared in base.txt with
+# the same pins; they are intentionally omitted here to avoid conflicting or
+# duplicate version constraints.
+# ============================================================================
 
-langchain-community
-
-langchain-openai
-
-openai
-
-tiktoken
-
-python-jose[cryptography]
-
-passlib[bcrypt]
+langchain==1.3.15
+langchain-community==0.4.2
+langchain-openai==1.5.2

@@ -1,44 +1,24 @@
-"""
-Enterprise planner agent.
-"""
+"""Rule-based planner that builds an execution plan for a question."""
 
 from __future__ import annotations
 
-from app.services.ai.copilot.context.models import (
-    RetrievalContext,
-)
+from app.services.ai.copilot.context.models import RetrievalContext
 
 from .base import BasePlanner
 from .models import ExecutionPlan
 from .rules import PlannerRules
 
 
-class PlannerAgent(
-    BasePlanner,
-):
-    """
-    Enterprise planner.
-    """
+class PlannerAgent(BasePlanner):
+    """Build an execution plan from routing rules."""
 
     def build_plan(
         self,
         question: str,
         context: RetrievalContext | None = None,
     ) -> ExecutionPlan:
-
-        steps, reason = (
-            PlannerRules.resolve(
-                question
-            )
-        )
-
-        conversation = []
-
-        if context is not None:
-
-            conversation = (
-                context.conversation
-            )
+        steps, reason = PlannerRules.resolve(question)
+        conversation = context.conversation if context is not None else []
 
         return ExecutionPlan(
             steps=steps,

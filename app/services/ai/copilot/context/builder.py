@@ -1,35 +1,25 @@
-"""
-Semantic context builder.
-"""
+"""Semantic context builder resilient to an unavailable vector index."""
 
 from __future__ import annotations
 
+import logging
+
+from app.services.ai.copilot.context.models import ContextDocument, RetrievalContext
 from app.services.ai.copilot.memory import MemoryService
-from app.services.ai.copilot.context.models import (
-    ContextDocument,
-    RetrievalContext,
-)
-from app.services.ai.retrieval.faiss import (
-    FAISSRetriever,
-)
+from app.services.ai.retrieval.faiss import FAISSRetriever
+
+logger = logging.getLogger(__name__)
 
 
 class ContextBuilder:
-    """
-    Enterprise context builder.
-    The builder works even if the
-    vector index is unavailable.
-    """
+    """Build retrieval context from memory and the vector index."""
 
-    def __init__(
-        self,
-    ) -> None:
+    def __init__(self) -> None:
         self.memory = MemoryService()
         try:
-            self.retriever = (
-                FAISSRetriever()
-            )
+            self.retriever = FAISSRetriever()
         except Exception:
+            logger.exception("Vector retriever unavailable; running without retrieval.")
             self.retriever = None
 
     async def build(
@@ -38,39 +28,30 @@ class ContextBuilder:
         session_id: str | None = None,
         top_k: int = 5,
     ) -> RetrievalContext:
+        conversation = await self._conversation(session_id)
+        documents = self._retrieve(question, top_k)
 
-        documents: list[
-            ContextDocument
-        ] = []
-        conversation: list[str] = []
+        return RetrievalContext(documents=documents, conversation=conversation)
 
-        if session_id is not None:
-            conversation = [
-                f"{m.role}: {m.content}"
-                for m in await self.memory.context(
-                    session_id
-                )
-            ]
+    async def _conversation(self, session_id: str | None) -> list[str]:
+        """Return prior turns for `session_id`, or an empty list."""
+        if session_id is None:
+            return []
 
-        if self.retriever is not None:
-            try:
-                results = (
-                    self.retriever.retrieve(
-                        question,
-                        top_k=top_k,
-                    )
-                )
-                documents = [
-                    ContextDocument(
-                        text=item["document"],
-                        score=item["score"],
-                    )
-                    for item in results
-                ]
-            except Exception:
-                documents = []
+        turns = await self.memory.context(session_id)
+        return [f"{turn.role}: {turn.content}" for turn in turns]
 
-        return RetrievalContext(
-            documents=documents,
-            conversation=conversation,
-        )
+    def _retrieve(self, question: str, top_k: int) -> list[ContextDocument]:
+        """Retrieve documents; return an empty list if retrieval fails."""
+        if self.retriever is None:
+            return []
+
+        try:
+            hits = self.retriever.retrieve(question, top_k=top_k)
+        except (KeyError, RuntimeError, ValueError):
+            logger.exception("Retrieval failed | question=%s", question)
+            return []
+
+        return [
+            ContextDocument(text=hit["document"], score=hit["score"]) for hit in hits
+        ]

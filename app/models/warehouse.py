@@ -1,10 +1,22 @@
 
 from uuid import uuid4
-from sqlalchemy import Column, String, Integer, Numeric, Date, DateTime, ForeignKey, Index
+
+from sqlalchemy import (
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+)
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship, declarative_mixin
+from sqlalchemy.orm import declarative_mixin, relationship
 from sqlalchemy.sql import func
+
 from app.database import Base
+
 
 @declarative_mixin
 class AuditMixin:

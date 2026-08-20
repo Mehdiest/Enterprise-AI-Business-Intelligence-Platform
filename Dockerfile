@@ -37,7 +37,9 @@ COPY --from=builder /install /usr/local
 
 COPY . .
 
-RUN chown -R appuser:appgroup /app
+# Ensure the migrate-then-serve entrypoint is executable, then drop privileges.
+RUN chmod +x /app/docker-entrypoint.sh && \
+    chown -R appuser:appgroup /app
 
 USER appuser
 
@@ -46,4 +48,8 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 CMD python -c "import urllib.request,os; urllib.request.urlopen(f'http://localhost:{os.environ.get(\"PORT\",8000)}/health')"
 
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Schema is owned by Alembic: the entrypoint runs `alembic upgrade head`
+# BEFORE starting uvicorn, so deployments are deterministic and the app never
+# creates tables at runtime.
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
+

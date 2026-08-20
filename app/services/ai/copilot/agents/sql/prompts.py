@@ -1,8 +1,4 @@
-"""
-SQL Prompt Templates.
-
-SQL prompt templates for LLM-backed generation.
-"""
+"""SQL prompt templates for LLM-backed generation."""
 
 from __future__ import annotations
 
@@ -10,18 +6,9 @@ SQL_SYSTEM_PROMPT = """
 You are an enterprise SQL generation assistant.
 
 Rules:
-
 - Generate valid PostgreSQL SQL.
-
 - Never modify data.
-
-- Never generate UPDATE.
-
-- Never generate DELETE.
-
-- Never generate DROP.
-
-- Never generate INSERT.
+- Never generate UPDATE, DELETE, DROP, or INSERT.
 
 Return SQL only.
 """.strip()

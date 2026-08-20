@@ -4,8 +4,7 @@ Agent registry.
 
 from __future__ import annotations
 
-from collections.abc import Awaitable
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable
 
 from app.services.ai.copilot.agents.analytics import (
     AnalyticsAgent,
@@ -25,7 +24,6 @@ from app.services.ai.copilot.agents.sql import (
 from app.services.ai.copilot.context_runtime import (
     ExecutionContext,
 )
-
 
 Handler = Callable[
     [ExecutionContext],

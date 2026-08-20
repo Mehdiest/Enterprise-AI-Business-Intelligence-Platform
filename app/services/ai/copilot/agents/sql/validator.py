@@ -1,6 +1,4 @@
-"""
-Enterprise SQL Validator.
-"""
+"""SQL validation restricting execution to read-only SELECT statements."""
 
 from __future__ import annotations
 
@@ -8,11 +6,7 @@ import sqlparse
 
 
 class SQLValidator:
-    """
-    Validate SQL queries before execution.
-
-    Only read-only SELECT statements are allowed.
-    """
+    """Validate SQL queries before execution."""
 
     ALLOWED_STATEMENT = "SELECT"
 
@@ -39,14 +33,9 @@ class SQLValidator:
     )
 
     def validate(self, sql: str) -> None:
-        """
-        Validate SQL query.
-
-        Raises:
-            ValueError: If the SQL is invalid or not read-only.
-        """
+        """Validate `sql`, raising ValueError if it is not a single read-only SELECT."""
         statements = [
-            statement for statement in sqlparse.parse(sql) if str(statement).strip("; \n\t\r")
+            stmt for stmt in sqlparse.parse(sql) if str(stmt).strip("; \n\t\r")
         ]
 
         if not statements:
@@ -56,7 +45,6 @@ class SQLValidator:
             raise ValueError("Only one SQL statement is allowed.")
 
         statement = statements[0]
-
         statement_type = (statement.get_type() or "UNKNOWN").upper()
 
         if statement_type != self.ALLOWED_STATEMENT:

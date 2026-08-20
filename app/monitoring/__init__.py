@@ -5,7 +5,6 @@ Monitoring utilities.
 from .health import (
     HealthChecker,
 )
-
 from .metrics import (
     MetricsCollector,
 )

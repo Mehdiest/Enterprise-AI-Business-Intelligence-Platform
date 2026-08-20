@@ -2,68 +2,74 @@
 # AI Business Intelligence Platform
 # =====================================
 
-.PHONY: install
+.PHONY: install install-dev run migrate migrate-down revision \
+        docker-build docker-up docker-down docker-logs docker-restart \
+        format lint type test test-offline coverage check clean
 
+# --- Dependencies --------------------------------------------------------
 install:
-	pip install -r requirements.txt
+	pip install -r requirements/base.txt -r requirements/ai.txt
 
+install-dev:
+	pip install -r requirements/all.txt
 
-.PHONY: run
-
+# --- Run -----------------------------------------------------------------
+# NOTE: schema is owned by Alembic. Always `make migrate` before serving a
+# fresh database — the app no longer creates tables at runtime.
 run:
 	uvicorn app.main:app --reload
 
+# --- Database migrations -------------------------------------------------
+migrate:
+	alembic upgrade head
 
-.PHONY: docker-build
+migrate-down:
+	alembic downgrade -1
 
+# Usage: make revision m="add widget table"
+revision:
+	alembic revision --autogenerate -m "$(m)"
+
+# --- Docker --------------------------------------------------------------
 docker-build:
 	docker compose build
-
-
-.PHONY: docker-up
 
 docker-up:
 	docker compose up -d
 
-
-.PHONY: docker-down
-
 docker-down:
 	docker compose down
 
-
-.PHONY: docker-logs
-
 docker-logs:
 	docker compose logs -f
-
-
-.PHONY: docker-restart
 
 docker-restart:
 	docker compose down
 	docker compose up -d
 
-
-.PHONY: format
-
+# --- Quality gates (mirror CI) ------------------------------------------
 format:
 	black .
-
-
-.PHONY: lint
 
 lint:
 	ruff check .
 
-
-.PHONY: test
+type:
+	mypy app
 
 test:
 	pytest
 
+# Migration sanity checks that need no database, Docker, or network.
+test-offline:
+	python tests/test_migrations_offline.py
 
-.PHONY: clean
+coverage:
+	pytest --cov=app --cov-report=term-missing --cov-report=xml
 
+# Run every static/local gate the way CI does.
+check: lint type test
+
+# --- Housekeeping --------------------------------------------------------
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +

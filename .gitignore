@@ -5,6 +5,7 @@ venv/
 .env
 .env.*
 !.env.example
+!.env.test.example
 *.zip
 .vscode/
 .idea/
@@ -13,7 +14,14 @@ venv/
 logs/
 *.log
 *.db
+*.sqlite
+*.sqlite3
+.memory.sqlite3
 *.pbix
 .DS_Store
 Thumbs.db
 vectorstore/
+
+# Local environment overrides used by tests
+.env.test
+

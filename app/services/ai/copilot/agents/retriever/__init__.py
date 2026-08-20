@@ -1,9 +1,7 @@
-"""
-Retriever Agent.
-"""
+"""Retriever agent package."""
 
-from .base import BaseRetrieverAgent
 from .agent import RetrieverAgent
+from .base import BaseRetrieverAgent
 
 __all__ = [
     "BaseRetrieverAgent",
