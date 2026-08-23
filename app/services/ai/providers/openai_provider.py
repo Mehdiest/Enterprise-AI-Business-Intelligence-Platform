@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 import os
 
-from openai import OpenAI, AuthenticationError, RateLimitError, APIError
+from openai import APIError, AuthenticationError, OpenAI, RateLimitError
 
 from app.config import settings
 
@@ -115,7 +115,7 @@ class OpenAIProvider(BaseLLMProvider):
                 f"Please check your Router dashboard or try again later. Error: {e}"
             ) from e
             
-        except APIError as e:
+        except APIError:
             # Re-raise our custom API errors
             raise
             

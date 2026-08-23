@@ -11,11 +11,7 @@ Responsibilities:
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import File
-from fastapi import HTTPException
-from fastapi import UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -40,6 +36,9 @@ async def ingest_csv(
 ):
     """
     Upload CSV and load data into warehouse.
+    
+    Storage location: All uploaded files are saved to /home/z/my-project/upload/{file_name} 
+    directory on the server filesystem.
     """
 
     if not file.filename.lower().endswith(".csv"):
@@ -95,7 +94,6 @@ async def ingest_csv(
             status_code=500,
             detail=str(exc),
         ) from exc
-
     finally:
 
         if "temp_path" in locals():

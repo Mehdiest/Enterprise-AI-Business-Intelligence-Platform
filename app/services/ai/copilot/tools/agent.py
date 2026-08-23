@@ -156,7 +156,7 @@ class ToolCallingAgent:
         try:
             result = self.provider.generate(prompt)
             return await result if inspect.isawaitable(result) else result
-        except Exception as e:
+        except Exception:
             logger.exception("LLM generation FAILED")
             raise
 
