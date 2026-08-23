@@ -27,6 +27,7 @@ async def health(response: Response) -> dict:
     except Exception as e:
         logger.exception("Health check failed")
         # Return 200 with unhealthy status rather than crashing
+        response.status_code = status.HTTP_200_OK
         return {
             "status": "unhealthy",
             "database": False,

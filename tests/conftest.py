@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import shutil
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -66,8 +67,15 @@ def reset_rate_limiter():
 @pytest.fixture(autouse=True)
 def reset_vector_manager():
     VectorManager.reset()
+    # Clean up persisted vector storage to ensure fresh state
+    storage_dir = Path("storage/vector")
+    if storage_dir.exists():
+        shutil.rmtree(storage_dir, ignore_errors=True)
     yield
     VectorManager.reset()
+    # Clean up again after test
+    if storage_dir.exists():
+        shutil.rmtree(storage_dir, ignore_errors=True)
 
 
 @pytest_asyncio.fixture(scope="function")
