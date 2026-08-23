@@ -13,6 +13,7 @@ class ExecutionStep(str, Enum):
     RETRIEVE = "retrieve"
     ANALYTICS = "analytics"
     SQL = "sql"
+    TOOL_CALL = "tool_call"
     CHART = "chart"
     RESPONSE = "response"
 

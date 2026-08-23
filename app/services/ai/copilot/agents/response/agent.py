@@ -28,4 +28,6 @@ class ResponseAgent(BaseResponseAgent):
             analytics=context.analytics,
             citations=citations,
             confidence=1.0,
+            response=context.response,
+            metadata=context.metadata,
         )

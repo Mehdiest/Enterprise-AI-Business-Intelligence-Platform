@@ -37,6 +37,8 @@ class CopilotRequest(BaseModel):
 
     question: str
 
+    session_id: str | None = None
+
 
 class CopilotResponse(BaseModel):
     """
@@ -46,6 +48,8 @@ class CopilotResponse(BaseModel):
     answer: str
 
     confidence: float = 0.0
+
+    session_id: str | None = None
 
     sources: list[
         SourceReference

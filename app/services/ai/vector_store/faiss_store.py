@@ -48,6 +48,9 @@ class FAISSVectorStore(BaseVectorStore):
         top_k: int = 3,
     ) -> list[dict]:
 
+        if self.index.ntotal == 0:
+            return []
+
         vector = np.asarray(
             [embedding],
             dtype="float32",
@@ -92,3 +95,16 @@ class FAISSVectorStore(BaseVectorStore):
         self.index.reset()
 
         self.documents.clear()
+
+    # ------------------------------------------------------------------
+    # Persistence
+    # ------------------------------------------------------------------
+
+    def save(self, path: str) -> None:
+        """Persist the FAISS index to disk."""
+        faiss.write_index(self.index, path)
+
+    def load(self, path: str) -> None:
+        """Load a FAISS index from disk."""
+        self.index = faiss.read_index(path)
+        self.dimension = self.index.d

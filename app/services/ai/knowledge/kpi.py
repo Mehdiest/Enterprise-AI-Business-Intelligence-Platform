@@ -4,8 +4,8 @@ KPI knowledge builder.
 
 from __future__ import annotations
 
-from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.warehouse import (
     DimProduct,
@@ -29,11 +29,11 @@ class KPIKnowledgeBuilder(
 
     def __init__(
         self,
-        db: Session,
+        db: AsyncSession,
     ):
         self.db = db
 
-    def build(
+    async def build(
         self,
     ) -> list[KnowledgeDocument]:
 
@@ -42,100 +42,78 @@ class KPIKnowledgeBuilder(
         ] = []
 
         total_sales = float(
-
-            self.db.query(
-                func.sum(
-                    FactSales.amount
+            (
+                await self.db.execute(
+                    select(func.sum(FactSales.amount))
                 )
             ).scalar()
             or 0
-
         )
 
         total_orders = int(
-
-            self.db.query(
-                func.count(
-                    FactSales.id
+            (
+                await self.db.execute(
+                    select(func.count(FactSales.id))
                 )
             ).scalar()
             or 0
-
         )
 
         average_order = (
-
             total_sales / total_orders
             if total_orders
             else 0
-
         )
 
         top_product = (
-
-            self.db.query(
-
-                DimProduct.product_name,
-
-                func.sum(
-                    FactSales.amount
-                ).label(
-                    "sales"
-                ),
-
+            await self.db.execute(
+                select(
+                    DimProduct.product_name,
+                    func.sum(
+                        FactSales.amount
+                    ).label(
+                        "sales"
+                    ),
+                )
+                .join(
+                    FactSales,
+                    FactSales.product_id == DimProduct.id,
+                )
+                .group_by(
+                    DimProduct.product_name
+                )
+                .order_by(
+                    func.sum(
+                        FactSales.amount
+                    ).desc()
+                )
             )
-
-            .join(
-                FactSales,
-                FactSales.product_id == DimProduct.id,
-            )
-
-            .group_by(
-                DimProduct.product_name
-            )
-
-            .order_by(
-                func.sum(
-                    FactSales.amount
-                ).desc()
-            )
-
-            .first()
-
-        )
+        ).first()
 
         top_region = (
-
-            self.db.query(
-
-                DimRegion.region_name,
-
-                func.sum(
-                    FactSales.amount
-                ).label(
-                    "sales"
-                ),
-
+            await self.db.execute(
+                select(
+                    DimRegion.region_name,
+                    func.sum(
+                        FactSales.amount
+                    ).label(
+                        "sales"
+                    ),
+                )
+                .join(
+                    FactSales,
+                    FactSales.region_id == DimRegion.id,
+                )
+                .group_by(
+                    DimRegion.region_name
+                )
+                .order_by(
+                    func.sum(
+                        FactSales.amount
+                    ).desc()
+                )
             )
-
-            .join(
-                FactSales,
-                FactSales.region_id == DimRegion.id,
-            )
-
-            .group_by(
-                DimRegion.region_name
-            )
-
-            .order_by(
-                func.sum(
-                    FactSales.amount
-                ).desc()
-            )
-
-            .first()
-
-        )
+        ).first()
 
         documents.append(
 

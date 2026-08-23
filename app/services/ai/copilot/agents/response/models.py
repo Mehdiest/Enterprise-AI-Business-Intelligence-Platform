@@ -14,3 +14,5 @@ class ResponseContext(BaseModel):
     analytics: dict | None = None
     citations: list[str] = Field(default_factory=list)
     confidence: float = 1.0
+    response: str = ""
+    metadata: dict = Field(default_factory=dict)

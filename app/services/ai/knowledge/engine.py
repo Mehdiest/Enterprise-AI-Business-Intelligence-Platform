@@ -7,7 +7,7 @@ produces a unified knowledge collection.
 
 from __future__ import annotations
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.knowledge import KnowledgeDocument
 from app.services.ai.knowledge.kpi import (
@@ -28,7 +28,7 @@ class KnowledgeEngine:
 
     def __init__(
         self,
-        db: Session,
+        db: AsyncSession,
     ):
         self.db = db
 
@@ -42,7 +42,7 @@ class KnowledgeEngine:
 
         ]
 
-    def build(
+    async def build(
         self,
     ) -> list[KnowledgeDocument]:
 
@@ -53,7 +53,7 @@ class KnowledgeEngine:
         for builder in self.builders:
 
             documents.extend(
-                builder.build()
+                await builder.build()
             )
 
         return documents

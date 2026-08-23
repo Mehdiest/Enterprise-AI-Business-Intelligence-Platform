@@ -1,8 +1,8 @@
 # Enterprise AI Business Intelligence Platform
 
-> A production-grade AI-powered Business Intelligence platform combining JWT-secured REST APIs, enterprise Role-Based Access Control (RBAC), a Multi-Agent AI Copilot, Star Schema data warehousing, ETL ingestion, and production-ready infrastructure — **v1.0.6 Token Rotation & Async Health Hardening Release**.
+> A production-grade AI-powered Business Intelligence platform combining JWT-secured REST APIs, enterprise Role-Based Access Control (RBAC), a Multi-Agent AI Copilot, Star Schema data warehousing, ETL ingestion, and production-ready infrastructure — **v1.1.0 Live SQL Tool Calling, Real RAG Knowledge Base & Persistent Conversation Memory Release**.
 
-[![Version](https://img.shields.io/badge/version-1.0.6-blue)](https://github.com/Mehdiest/Enterprise-AI-Business-Intelligence-Platform)
+[![Version](https://img.shields.io/badge/version-1.1.0-blue)](https://github.com/Mehdiest/Enterprise-AI-Business-Intelligence-Platform)
 [![Python](https://img.shields.io/badge/python-3.12-blue?logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-latest-green?logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](docker-compose.yml)
@@ -36,7 +36,12 @@ The platform is live and publicly testable in under a minute:
 
 > If the page takes 30–60 seconds to load, the server is waking up — wait and refresh.
 
-**2. Log in with the demo account**
+**2. Log in with a test account**
+
+The platform provides **two test accounts** with different access levels:
+
+### Option A: Demo Account (Viewer Role - Basic Access)
+> Use this for basic Copilot queries and dashboard viewing
 
 - Open `POST /auth/login` → **Try it out**
 - Enter the following credentials:
@@ -44,17 +49,41 @@ The platform is live and publicly testable in under a minute:
 username: demo@enterprise-bi.com
 password: Demo@12345
 ```
+
+### Option B: Admin Account (Full Access) ⭐
+> **Recommended for complete feature testing** — unlocks ALL endpoints including AI admin features
+
+- Open `POST /auth/login` → **Try it out**
+- Enter the following credentials:
+```
+username: admin@enterprise-bi.com
+password: Admin@12345
+```
+
+| Feature | Demo (Viewer) | Admin |
+|---------|---------------|-------|
+| `/copilot/query` | ✅ | ✅ |
+| `/dashboard/*` | ✅ | ✅ |
+| `/ai/copilot` | ❌ 403 Forbidden | ✅ Full Access |
+| `/ai/insights` | ❌ 403 Forbidden | ✅ Full Access |
+| `/ingest/csv` | ❌ 403 Forbidden | ✅ Full Access |
+
 - Click **Execute** and copy the `access_token` from the response body
 
 **3. Authorize Swagger with the token**
 
 - Click the green **Authorize** button (top right of the Swagger page)
-- Paste the same demo credentials (`username` / `password`) into the OAuth2 form
+- Paste your chosen credentials (`username` / `password`) into the OAuth2 form
 - Click **Authorize** → then **Close**
 
-You are now authenticated. All protected endpoints are unlocked.
+You are now authenticated. All endpoints matching your role are unlocked.
 
-> This is a shared demo account for evaluation purposes. For production use, register your own account via `POST /auth/register`.
+> 💡 **Tip:** Use the **Admin account** to test the complete platform including:
+> - `POST /ai/copilot` — Advanced AI Copilot (admin-only endpoint)
+> - `GET /ai/insights` — AI-generated business insights
+> - `POST /ingest/csv` — Upload your own data files
+> 
+> These return `403 Forbidden` with the demo viewer account.
 
 **4. Try the AI Copilot**
 
@@ -191,7 +220,7 @@ Enterprise Response  (answer + confidence + cited sources)
 - **Agent Registry** — Retriever, SQL, Analytics, Response agents
 - **SQL Agent** — schema-aware, LLM-backed SQL generation with a safe, schema-aware rule-based fallback whenever the LLM is unavailable or returns unsafe SQL
 - **Prompt Builder** — enterprise prompt templates
-- **Conversation Memory** — SQLite-backed, TTL-bound session history with automatic garbage collection (`collect_garbage()`); all disk I/O runs off the event loop via `asyncio.to_thread`
+- **Conversation Memory** — Postgres-backed, TTL-bound session history persisted in a `conversation_turns` table (Alembic-managed); multi-worker-safe, with automatic expiry garbage collection (`collect_garbage()`)
 - **Response Pipeline** — citation engine, confidence scoring, hallucination guard, response validator
 - **LLM Provider Layer** — factory pattern; OpenAI provider implemented; mock provider echoes real warehouse data for keyless demos; ready for Azure, Anthropic, Ollama
 
@@ -317,7 +346,8 @@ Enterprise-AI-Business-Intelligence-Platform/
 │   │               └── response/
 │   ├── models/
 │   │   ├── user.py
-│   │   └── warehouse.py
+│   │   ├── warehouse.py
+│   │   └── conversation.py
 │   ├── schemas/
 │   ├── monitoring/
 │   │   ├── health.py
@@ -331,7 +361,8 @@ Enterprise-AI-Business-Intelligence-Platform/
 ├── alembic/
 │   └── versions/
 │       ├── 001_initial_star_schema.py
-│       └── 002_add_refresh_token_columns.py
+│       ├── 002_add_refresh_token_columns.py
+│       └── 003_add_conversation_turns.py
 ├── tests/
 │   ├── test_auth.py
 │   ├── test_token_hardening.py
@@ -630,7 +661,8 @@ curl -X POST http://localhost:8000/copilot/query \
 | **v1.0.4** | ✅ Released | Enterprise RBAC, Refresh Token flow, SQL Validator, SQLAlchemy Connection Pooling, Production Authorization |
 | **v1.0.5** | ✅ Released | Full async migration — `asyncpg` engine, async-compatible auth/ingest/dashboard/insights routers, async batch warehouse loading, schema-aware LLM-backed SQL generation with safe fallback, SQLite-backed TTL conversation memory with non-blocking I/O |
 | **v1.0.6** | ✅ Released | Refresh token rotation & hashing, token-type enforcement, hardened SQL validator, async health/readiness probes, resilient CSV ingestion, regression test suite |
-| **v1.1.0** | 🔜 Planned | Live SQL Tool Calling, Real RAG Knowledge Base, Persistent Conversation Memory |
+| **v1.0.7** | ✅ Released | Deterministic Deployment — Alembic-owned schema, migrate-then-serve, migration tests, offline gate, pinned dependencies, CI quality gates |
+| **v1.1.0** | ✅ Released | Live SQL Tool Calling, Real RAG Knowledge Base, Persistent Conversation Memory |
 | **v1.2.0** | 🔜 Planned | Streaming Responses, Multi-Provider Routing, Agent Orchestration |
 | **v2.0** | 🔭 Vision | Autonomous Decision Intelligence |
 
@@ -638,7 +670,13 @@ curl -X POST http://localhost:8000/copilot/query \
 
 ## Changelog
 
-### Unreleased — Deterministic Deployment (Phase 1)
+### v1.1.0 — Live SQL Tool Calling, Real RAG & Persistent Memory Release
+
+- **Persistent Conversation Memory** — Copilot conversation history moved from a local SQLite file to Postgres. A new `conversation_turns` table (Alembic revision `003`) stores each turn with a TTL, so memory survives restarts and is safe across multiple workers. `POST /copilot/query` now accepts an optional `session_id` and returns it, letting clients continue a conversation across requests; both the user question and the assistant answer are persisted per turn.
+- **Real RAG Knowledge Base** — the Copilot now retrieves grounded context from a live FAISS vector index built from warehouse data. Knowledge builders (product, region, KPI) run async against the database, embed documents via OpenAI or a deterministic local fallback (no API key required), and persist the index to disk for fast restarts. The index rebuilds automatically after CSV ingestion, and retrieval results flow into the Copilot prompt as cited sources.
+- **Live SQL Tool Calling** — the Copilot now runs an LLM-driven tool-calling loop: the model proposes `run_sql_query` calls as JSON, the `ToolExecutor` validates and executes them inside the existing read-only, time-bounded transaction, and results are fed back for up to 3 iterations until a final grounded answer. A new `TOOL_CALL` execution step (gated by `ENABLE_TOOL_CALLING`) replaces the fixed SQL pipeline for analytics questions, with the classic SQL agent retained as fallback.
+
+### v1.0.7 — Deterministic Deployment 
 
 - **Real baseline migration** — the previously-empty `001_initial_star_schema` now creates the full schema (users + star-schema warehouse) exactly as the ORM defines it; `002` continues to add the refresh-token columns on top.
 - **Alembic wiring** — added `alembic.ini`, an async-aware `alembic/env.py`, and `script.py.mako`, so `alembic upgrade head` / `downgrade base` work out of the box against the asyncpg database.

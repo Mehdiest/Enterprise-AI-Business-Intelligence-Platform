@@ -1,7 +1,17 @@
-"""Shared pytest fixtures for async database and client testing."""
+"""Shared pytest fixtures.
+
+Schema lifecycle note
+---------------------
+Tests build the database schema **exclusively through Alembic migrations**
+(`alembic upgrade head`) — never through ``Base.metadata.create_all``. Each test
+starts from a genuinely empty PostgreSQL schema, so the committed migrations are
+continuously proven to reproduce the ORM models. This is the Phase 1
+"deterministic deployment" exit condition, enforced on every test run.
+"""
 
 from __future__ import annotations
 
+import asyncio
 import os
 from pathlib import Path
 
@@ -13,14 +23,16 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import select, text
-from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from app.database import Base, get_db
+from app.database import get_db
 from app.dependencies.rate_limit import _attempts
 from app.main import app
 from app.models.user import User
-from app.monitoring import health as health_module
 from app.services.ai.copilot.agents.sql import executor as sql_executor_module
+from app.services.ai.copilot.memory import store as memory_store_module
+from app.services.ai.vector_store.manager import VectorManager
+from tests._migrations import upgrade_to_head
 
 
 def _build_db_url() -> str:
@@ -32,11 +44,16 @@ def _build_db_url() -> str:
     return f"postgresql+asyncpg://{user}:{password}@{host}:{port}/{db}"
 
 
-async def _reset_schema(engine: AsyncEngine) -> None:
-    """Drop all application tables and the alembic version table."""
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.execute(text("DROP TABLE IF EXISTS alembic_version"))
+async def _reset_schema(engine) -> None:
+    """Drop and recreate the public schema, leaving a completely empty database.
+
+    Using ``DROP SCHEMA ... CASCADE`` guarantees that no leftover tables (or a
+    stale ``alembic_version`` row) survive between tests, so the subsequent
+    ``alembic upgrade head`` always runs against a truly empty database.
+    """
+    async with engine.begin() as connection:
+        await connection.execute(text("DROP SCHEMA IF EXISTS public CASCADE"))
+        await connection.execute(text("CREATE SCHEMA public"))
 
 
 @pytest.fixture(autouse=True)
@@ -46,48 +63,57 @@ def reset_rate_limiter():
     _attempts.clear()
 
 
+@pytest.fixture(autouse=True)
+def reset_vector_manager():
+    VectorManager.reset()
+    yield
+    VectorManager.reset()
+
+
 @pytest_asyncio.fixture(scope="function")
 async def db():
-    """Provide an isolated async database session."""
-    test_engine = create_async_engine(_build_db_url(), pool_pre_ping=True)
-    testing_session = async_sessionmaker(
+    database_url = _build_db_url()
+    engine = create_async_engine(database_url, pool_pre_ping=True)
+
+    TestingSessionLocal = async_sessionmaker(
         autocommit=False,
         autoflush=False,
         expire_on_commit=False,
-        bind=test_engine,
+        bind=engine,
     )
 
-    orig_sql_exec = sql_executor_module.SessionLocal
-    orig_health_engine = health_module.engine
-    
-    sql_executor_module.SessionLocal = testing_session
-    health_module.engine = test_engine
+    original_session_local = sql_executor_module.SessionLocal
+    sql_executor_module.SessionLocal = TestingSessionLocal
 
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-        await conn.run_sync(Base.metadata.create_all)
+    original_memory_session_local = memory_store_module.SessionLocal
+    memory_store_module.SessionLocal = TestingSessionLocal
 
-    async with testing_session() as session:
+    # Start from a genuinely empty database, then build the schema ONLY via
+    # Alembic migrations. `command.upgrade` runs its own event loop internally
+    # (env.py uses asyncio.run), so it must run in a worker thread to avoid a
+    # "cannot be called from a running event loop" error.
+    await _reset_schema(engine)
+    await asyncio.to_thread(upgrade_to_head, database_url)
+
+    async with TestingSessionLocal() as session:
         yield session
 
-    async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+    # Tear down back to an empty schema so the next test starts clean.
+    await _reset_schema(engine)
+    await engine.dispose()
 
-    await test_engine.dispose()
-    
-    sql_executor_module.SessionLocal = orig_sql_exec
-    health_module.engine = orig_health_engine
+    sql_executor_module.SessionLocal = original_session_local
+    memory_store_module.SessionLocal = original_memory_session_local
 
 
 @pytest_asyncio.fixture(scope="function")
 async def client(db):
-    """Provide an async HTTP client with overridden dependencies."""
     async def override_get_db():
         yield db
 
     app.dependency_overrides[get_db] = override_get_db
-    transport = ASGITransport(app=app)
 
+    transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
         yield c
 
@@ -111,14 +137,14 @@ async def registered_user(client, test_user):
 
 @pytest_asyncio.fixture
 async def access_token(client, registered_user):
-    res = await client.post(
+    response = await client.post(
         "/auth/login",
         data={
             "username": registered_user["email"],
             "password": registered_user["password"],
         },
     )
-    return res.json()["access_token"]
+    return response.json()["access_token"]
 
 
 @pytest_asyncio.fixture
@@ -130,26 +156,28 @@ async def authorized_client(client, access_token):
 @pytest_asyncio.fixture
 async def admin_user(db, client, test_user):
     await client.post("/auth/register", json=test_user)
-    res = await db.execute(select(User).where(User.email == test_user["email"]))
-    user = res.scalar_one_or_none()
-    
+
+    result = await db.execute(select(User).where(User.email == test_user["email"]))
+    user = result.scalar_one_or_none()
+
     user.role = "admin"
+
     await db.commit()
     await db.refresh(user)
-    
+
     return test_user
 
 
 @pytest_asyncio.fixture
 async def admin_access_token(client, admin_user):
-    res = await client.post(
+    response = await client.post(
         "/auth/login",
         data={
             "username": admin_user["email"],
             "password": admin_user["password"],
         },
     )
-    return res.json()["access_token"]
+    return response.json()["access_token"]
 
 
 @pytest_asyncio.fixture
@@ -161,9 +189,11 @@ async def admin_client(client, admin_access_token):
 @pytest.fixture
 def sample_csv(tmp_path):
     file_path = tmp_path / "sales.csv"
+
     file_path.write_text(
         "customer_code,customer_name,product_code,product_name,region,channel,sale_date,quantity,amount\n"
         "C001,Alice,P001,Laptop,North,Online,2024-01-15,2,2400.00\n"
         "C002,Bob,P002,Phone,South,Retail,2024-01-16,1,800.00\n"
     )
+
     return file_path

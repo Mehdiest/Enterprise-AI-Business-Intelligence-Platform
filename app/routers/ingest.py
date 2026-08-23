@@ -13,6 +13,7 @@ from app.config import settings
 from app.database import get_db
 from app.dependencies.rbac import require_admin
 from app.schemas.data import IngestionResponse
+from app.services.ai.vector_store.manager import VectorManager
 from app.services.etl.csv_loader import CSVLoader, CSVLoaderError
 from app.services.etl.transformer import DataTransformer
 from app.services.etl.warehouse_loader import WarehouseLoader
@@ -34,6 +35,7 @@ async def ingest_csv(
         temp_path = await _save_upload(file)
         received_rows, loaded_rows = await _load_csv(temp_path, db)
         logger.info("CSV ingested | user=%s | rows=%s", current_user.email, loaded_rows)
+        await _rebuild_knowledge_index(db)
         return _ingestion_response(received_rows, loaded_rows)
     except CSVLoaderError as exc:
         logger.warning("Invalid CSV | user=%s | error=%s", current_user.email, exc)
@@ -99,3 +101,12 @@ def _ingestion_response(received_rows: int, loaded_rows: int) -> IngestionRespon
 def _delete_temp_file(temp_path: Path | None) -> None:
     if temp_path and temp_path.exists():
         temp_path.unlink(missing_ok=True)
+
+
+async def _rebuild_knowledge_index(db: AsyncSession) -> None:
+    """Rebuild the semantic knowledge index after new data is loaded."""
+    try:
+        await VectorManager.rebuild(db)
+        logger.info("Knowledge index rebuilt after ingestion.")
+    except Exception:
+        logger.exception("Failed to rebuild knowledge index after ingestion.")

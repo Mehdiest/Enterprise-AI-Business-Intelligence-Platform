@@ -4,8 +4,8 @@ Region knowledge builder.
 
 from __future__ import annotations
 
-from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.warehouse import (
     DimRegion,
@@ -28,43 +28,34 @@ class RegionKnowledgeBuilder(
 
     def __init__(
         self,
-        db: Session,
+        db: AsyncSession,
     ):
         self.db = db
 
-    def build(
+    async def build(
         self,
     ) -> list[KnowledgeDocument]:
 
-        rows = (
-
-            self.db.query(
-
+        stmt = (
+            select(
                 DimRegion.region_name,
-
                 func.sum(
                     FactSales.amount
                 ).label(
                     "sales"
                 ),
-
             )
-
             .join(
-
                 FactSales,
-
                 FactSales.region_id == DimRegion.id,
-
             )
-
             .group_by(
                 DimRegion.region_name
             )
-
-            .all()
-
         )
+
+        result = await self.db.execute(stmt)
+        rows = result.all()
 
         documents: list[
             KnowledgeDocument

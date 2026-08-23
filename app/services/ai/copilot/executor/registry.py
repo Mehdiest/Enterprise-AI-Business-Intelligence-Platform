@@ -24,6 +24,9 @@ from app.services.ai.copilot.agents.sql import (
 from app.services.ai.copilot.context_runtime import (
     ExecutionContext,
 )
+from app.services.ai.copilot.tools import (
+    ToolCallStep,
+)
 
 Handler = Callable[
     [ExecutionContext],
@@ -42,6 +45,7 @@ class AgentRegistry:
         analytics = AnalyticsAgent()
         sql = SQLAgent()
         response = ResponseAgent()
+        tool_call = ToolCallStep()
 
         self._agents: dict[
             ExecutionStep,
@@ -50,6 +54,7 @@ class AgentRegistry:
             ExecutionStep.RETRIEVE: retriever.run,
             ExecutionStep.ANALYTICS: analytics.run,
             ExecutionStep.SQL: sql.run,
+            ExecutionStep.TOOL_CALL: tool_call.run,
             ExecutionStep.RESPONSE: response.run,
         }
 

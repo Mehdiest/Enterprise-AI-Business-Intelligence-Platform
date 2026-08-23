@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from app.core.feature_flags import FeatureFlags
+
 from .models import ExecutionStep
 
 _CHART_WORDS = ("chart", "plot", "graph", "visual")
@@ -27,17 +29,31 @@ class PlannerRules:
             )
 
         if any(word in q for word in _ANALYTICS_WORDS):
-            return (
-                [
-                    ExecutionStep.RETRIEVE,
-                    ExecutionStep.SQL,
-                    ExecutionStep.ANALYTICS,
-                    ExecutionStep.RESPONSE,
-                ],
-                "Business analytics request detected.",
-            )
+            return PlannerRules._analytics_steps()
 
         return (
             [ExecutionStep.RETRIEVE, ExecutionStep.RESPONSE],
             "Default execution strategy.",
+        )
+
+    @staticmethod
+    def _analytics_steps() -> tuple[list[ExecutionStep], str]:
+        if FeatureFlags.ENABLE_TOOL_CALLING:
+            return (
+                [
+                    ExecutionStep.RETRIEVE,
+                    ExecutionStep.TOOL_CALL,
+                    ExecutionStep.ANALYTICS,
+                    ExecutionStep.RESPONSE,
+                ],
+                "Business analytics request detected (live tool calling).",
+            )
+        return (
+            [
+                ExecutionStep.RETRIEVE,
+                ExecutionStep.SQL,
+                ExecutionStep.ANALYTICS,
+                ExecutionStep.RESPONSE,
+            ],
+            "Business analytics request detected.",
         )

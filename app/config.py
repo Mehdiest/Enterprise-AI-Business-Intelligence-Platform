@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     """Settings loaded from environment variables."""
 
     project_name: str = "Enterprise AI Business Intelligence Platform"
-    app_version: str = "1.0.6"
+    app_version: str = "1.1.0"
     api_v1_prefix: str = "/api/v1"
     app_env: str = "development"
 

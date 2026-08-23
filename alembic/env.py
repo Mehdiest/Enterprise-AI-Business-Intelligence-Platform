@@ -25,6 +25,7 @@ from alembic import context
 # ---------------------------------------------------------------------------
 from app.config import settings
 from app.database import Base
+from app.models import conversation as _conversation  # noqa: F401  (register memory table)
 from app.models import user as _user  # noqa: F401  (register User table)
 from app.models import warehouse as _warehouse  # noqa: F401  (register warehouse tables)
 

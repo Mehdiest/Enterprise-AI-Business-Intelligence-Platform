@@ -63,3 +63,42 @@ async def test_copilot_answer_is_string(authorized_client):
     assert res.status_code == 200
     assert isinstance(res.json()["answer"], str)
     assert len(res.json()["answer"]) > 0
+
+
+@pytest.mark.asyncio
+async def test_copilot_returns_session_id(authorized_client):
+    res = await authorized_client.post(
+        "/copilot/query",
+        json={"question": "What is the total revenue?"},
+    )
+    assert res.status_code == 200
+    assert res.json()["session_id"]
+
+
+@pytest.mark.asyncio
+async def test_copilot_persists_conversation_turns(authorized_client, db):
+    from sqlalchemy import select
+
+    from app.models.conversation import ConversationTurn
+
+    first = await authorized_client.post(
+        "/copilot/query",
+        json={"question": "What is the total revenue?"},
+    )
+    session_id = first.json()["session_id"]
+
+    await authorized_client.post(
+        "/copilot/query",
+        json={"question": "And by region?", "session_id": session_id},
+    )
+
+    turns = (
+        await db.execute(
+            select(ConversationTurn).where(
+                ConversationTurn.session_id == session_id
+            )
+        )
+    ).scalars().all()
+
+    assert len(turns) == 4
+    assert [t.role for t in turns] == ["user", "assistant", "user", "assistant"]

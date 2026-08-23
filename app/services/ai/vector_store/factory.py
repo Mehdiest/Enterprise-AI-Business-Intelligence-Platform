@@ -21,6 +21,7 @@ class VectorStoreFactory:
     def create(
         cls,
         provider: str | None = None,
+        dimension: int = 384,
     ) -> BaseVectorStore:
 
         provider = (
@@ -29,7 +30,7 @@ class VectorStoreFactory:
         ).lower()
 
         if provider == "faiss":
-            return FAISSVectorStore()
+            return FAISSVectorStore(dimension=dimension)
 
         raise ValueError(
             f"Unsupported vector provider: {provider}"

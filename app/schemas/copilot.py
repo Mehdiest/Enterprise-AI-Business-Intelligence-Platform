@@ -17,6 +17,8 @@ class CopilotRequest(BaseModel):
         min_length=1,
     )
 
+    session_id: str | None = None
+
 
 class SourceItem(BaseModel):
 
@@ -35,5 +37,7 @@ class CopilotResponse(BaseModel):
     answer: str
 
     confidence: float
+
+    session_id: str | None = None
 
     sources: list[SourceItem] = []

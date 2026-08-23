@@ -29,6 +29,7 @@ from alembic import command
 from app.database import Base
 
 # Import models so every table is registered on Base.metadata before we compare.
+from app.models import conversation as _conversation  # noqa: F401
 from app.models import user as _user  # noqa: F401
 from app.models import warehouse as _warehouse  # noqa: F401
 from tests._migrations import (
@@ -46,6 +47,7 @@ EXPECTED_TABLES = {
     "dim_channel",
     "dim_date",
     "fact_sales",
+    "conversation_turns",
 }
 
 
@@ -173,7 +175,7 @@ def test_migrations_match_orm_models_no_drift(clean_database_url):
 
 
 def test_stamped_version_is_head(clean_database_url):
-    """After upgrade, the recorded DB revision should be the latest (002)."""
+    """After upgrade, the recorded DB revision should be the latest (003)."""
     upgrade_to_head(clean_database_url)
 
     async def _version() -> str | None:
@@ -188,7 +190,7 @@ def test_stamped_version_is_head(clean_database_url):
         finally:
             await engine.dispose()
 
-    assert asyncio.run(_version()) == "002"
+    assert asyncio.run(_version()) == "003"
 
 
 def test_upgrade_is_reentrant_when_already_at_head(clean_database_url):

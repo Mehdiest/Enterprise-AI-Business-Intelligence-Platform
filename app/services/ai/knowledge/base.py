@@ -16,7 +16,7 @@ class BaseKnowledgeBuilder(ABC):
     """
 
     @abstractmethod
-    def build(
+    async def build(
         self,
     ) -> list[KnowledgeDocument]:
         """

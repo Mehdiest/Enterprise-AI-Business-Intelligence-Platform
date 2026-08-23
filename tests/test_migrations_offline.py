@@ -35,6 +35,7 @@ EXPECTED_TABLES = {
     "dim_channel",
     "dim_date",
     "fact_sales",
+    "conversation_turns",
 }
 
 
@@ -60,12 +61,13 @@ def _iter_app_sources():
 
 
 def test_single_head_and_linear_chain():
-    """Revisions form one linear chain: base -> 001 -> 002 (single head)."""
+    """Revisions form one linear chain: base -> 001 -> 002 -> 003 (single head)."""
     script = ScriptDirectory.from_config(_alembic_config())
 
-    assert list(script.get_heads()) == ["002"]
+    assert list(script.get_heads()) == ["003"]
     assert script.get_revision("001").down_revision is None
     assert script.get_revision("002").down_revision == "001"
+    assert script.get_revision("003").down_revision == "002"
 
 
 def test_offline_upgrade_sql_emits_full_schema():
@@ -76,7 +78,13 @@ def test_offline_upgrade_sql_emits_full_schema():
         assert f"create table {tbl}" in sql, f"missing DDL for {tbl}"
     for col in ("refresh_token_jti", "refresh_token_hash"):
         assert col in sql, f"missing refresh-token column {col}"
-    for idx in ("ix_users_email", "ix_fact_sales_date", "ix_users_refresh_token_jti"):
+    for idx in (
+        "ix_users_email",
+        "ix_fact_sales_date",
+        "ix_users_refresh_token_jti",
+        "ix_conversation_turns_session_id",
+        "ix_conversation_turns_expires_at",
+    ):
         assert idx in sql, f"missing index {idx}"
 
 

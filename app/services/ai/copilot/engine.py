@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import inspect
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.services.ai.copilot.agents.planner import PlannerAgent
 from app.services.ai.copilot.context import ContextBuilder
 from app.services.ai.copilot.context_runtime import ExecutionContext
@@ -43,9 +45,9 @@ class CopilotEngine:
     Response
     """
 
-    def __init__(self) -> None:
+    def __init__(self, db: AsyncSession | None = None) -> None:
         self.intent = RuleBasedIntentClassifier()
-        self.context_builder = ContextBuilder()
+        self.context_builder = ContextBuilder(db=db)
         self.planner = PlannerAgent()
         self.executor = ExecutionEngine()
         self.prompt_builder = PromptBuilder()
@@ -78,20 +80,12 @@ class CopilotEngine:
 
         runtime.plan = plan
         runtime.retrieved_context = retrieval
+        runtime.metadata["session_id"] = session_id
 
         # ExecutionEngine handles sync and async agents transparently
         runtime = await self.executor.execute(runtime)
 
-        prompt = self.prompt_builder.build(
-            question=runtime.question,
-            context=retrieval,
-            sql_result=getattr(runtime, "sql_result", {}),
-        )
-
-        # Providers may be sync or async depending on backend
-        answer = self.llm.generate(prompt)
-        if inspect.isawaitable(answer):
-            answer = await answer
+        answer = await self._build_answer(runtime, retrieval)
 
         sources = [
             SourceReference(
@@ -110,3 +104,21 @@ class CopilotEngine:
             confidence=intent.confidence,
             sources=sources,
         )
+
+    async def _build_answer(
+        self,
+        runtime: ExecutionContext,
+        retrieval,
+    ) -> str:
+        """Use the tool-calling answer when available, else query the LLM."""
+        if runtime.metadata.get("tool_calling") and runtime.response:
+            return runtime.response
+
+        prompt = self.prompt_builder.build(
+            question=runtime.question,
+            context=retrieval,
+            sql_result=getattr(runtime, "sql_result", {}),
+        )
+
+        answer = self.llm.generate(prompt)
+        return await answer if inspect.isawaitable(answer) else answer

@@ -5,7 +5,9 @@ Enterprise Copilot Router.
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.database import get_db
 from app.dependencies.auth import get_current_user
 from app.models.user import User
 from app.schemas.copilot import (
@@ -32,16 +34,18 @@ service = CopilotService()
 async def query(
     request: CopilotRequest,
     current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
     """
     Enterprise AI Copilot endpoint.
     """
 
-    response = await service.ask(request)
+    response = await service.ask(request, db=db)
 
     return CopilotResponse(
         answer=response.answer,
         confidence=response.confidence,
+        session_id=response.session_id,
         sources=[
             SourceItem(
                 id=s.id,

@@ -6,6 +6,7 @@ Importing every ORM model here ensures each table is registered on
 autogenerate "see" the full schema (and keeps the migration drift test honest).
 """
 
+from .conversation import ConversationTurn
 from .user import User
 from .warehouse import (
     AuditMixin,
@@ -18,6 +19,7 @@ from .warehouse import (
 )
 
 __all__ = [
+    "ConversationTurn",
     "User",
     "AuditMixin",
     "DimCustomer",
