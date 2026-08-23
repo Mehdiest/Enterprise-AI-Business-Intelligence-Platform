@@ -59,6 +59,10 @@ class KPIKnowledgeBuilder(
             or 0
         )
 
+        # If warehouse is empty, return no documents
+        if total_orders == 0:
+            return documents
+
         average_order = (
             total_sales / total_orders
             if total_orders
