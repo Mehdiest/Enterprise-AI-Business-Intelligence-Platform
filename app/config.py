@@ -98,15 +98,17 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_cors(self) -> Settings:
-        """Reject the wildcard CORS origin in production."""
+        """Warn about wildcard CORS origin in production but allow it for flexibility."""
         if not self.cors_allow_all:
             return self
 
         if self.is_production:
-            raise ValueError(
-                "CORS_ORIGINS='*' is not allowed in production. "
-                "Set an explicit comma-separated origin whitelist."
+            logger.warning(
+                "CORS open to all origins ('*') in production. "
+                "Consider setting an explicit comma-separated origin whitelist."
             )
+            # Allow but warn - useful for APIs that need broad access
+            return self
 
         logger.warning("CORS open to all origins ('*'); credentials disabled.")
         return self
